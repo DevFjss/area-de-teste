@@ -88,6 +88,8 @@
         /* Abas */
         .tabs-wrapper {
             margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
         }
 
         .tabs-list {
@@ -112,6 +114,7 @@
             cursor: pointer;
             transition: all 0.2s;
             color: #3f5a77;
+            white-space: nowrap;
         }
 
         .tab-btn i {
@@ -300,7 +303,7 @@
             <button class="tab-btn active" data-tab="manut"><i class="fas fa-tools"></i> Manutenção 2026</button>
             <button class="tab-btn" data-tab="faed"><i class="fas fa-landmark"></i> FAED 2026</button>
             <button class="tab-btn" data-tab="pnae"><i class="fas fa-utensils"></i> PNAE 2026</button>
-            <button class="tab-btn" data-tab="ordinaria"><i class="fas fa-utensils"></i> Manutenção ordinária</button>
+            <button class="tab-btn" data-tab="ordinaria"><i class="fas fa-wrench"></i> Manutenção Ordinária</button>
         </div>
     </div>
 
@@ -339,11 +342,12 @@
     
     // Abas: todas com a MESMA ESTRUTURA (colunas A-E: NTE, Município, Código Sec, Unidade Escolar, Valor)
     // Os dados começam na LINHA 3 de cada aba (linhas 1 e 2 são cabeçalhos/títulos)
+    // CORREÇÃO: objeto com todas as abas, sem duplicidade e com vírgulas corretas
     const SHEET_TABS = {
         manut: { sheetName: 'geradorManut2026', label: 'Manutenção 2026' },
         faed: { sheetName: 'geradorFaed2026', label: 'FAED 2026' },
-        pnae: { sheetName: 'geradorPnae2026', label: 'PNAE 2026' }
-        pnae: { sheetName: 'ordinaria', label: 'Manutenção ordinária' }
+        pnae: { sheetName: 'geradorPnae2026', label: 'PNAE 2026' },
+        ordinaria: { sheetName: 'ordinaria', label: 'Manutenção Ordinária' }
     };
     
     // Nomes padronizados das colunas (A até E)
@@ -366,24 +370,19 @@
     const activeSheetNameSpan = document.getElementById('activeSheetName');
     
     // Função para buscar dados da planilha IGNORANDO as duas primeiras linhas (linha 1 e 2 são títulos)
-    // Utilizando Google Sheets API com range para pular cabeçalhos
     async function fetchSheetData(sheetName) {
         try {
             // Usando a API do Google Sheets com range A3:E (começa na linha 3 até o final)
-            // Formato: https://docs.google.com/spreadsheets/d/{ID}/gviz/tq?tqx=out:csv&sheet={sheet}&range=A3:E
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&range=A3:E`;
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const csvText = await response.text();
             
-            // Parse do CSV
             const parsed = parseCSV(csvText);
             if (!parsed || parsed.length === 0) {
                 return { rows: [] };
             }
             
-            // parsed contém as linhas a partir da linha 3 (já pulamos as 2 primeiras via range)
-            // Mapear para objetos usando as colunas padronizadas
             const rows = parsed.map(row => {
                 const obj = {};
                 STANDARD_COLUMNS.forEach((col, idx) => {
@@ -392,14 +391,13 @@
                 });
                 return obj;
             }).filter(row => {
-                // Filtrar linhas completamente vazias ou onde NTE está vazio
                 const hasData = Object.values(row).some(v => v && v.toString().trim() !== "");
                 return hasData;
             });
             
             return { rows: rows };
         } catch (err) {
-            console.error(`Erro ao buscar aba ${sheetName}:`, err);
+            console.error(`Erro ao buscar aba ${sheetName} com range:`, err);
             return { rows: [] };
         }
     }
@@ -430,7 +428,7 @@
             });
             return { rows: rows };
         } catch (err) {
-            console.error(`Fallback error:`, err);
+            console.error(`Fallback error para aba ${sheetName}:`, err);
             return { rows: [] };
         }
     }
@@ -597,7 +595,10 @@
     // Carregar aba (tenta primeiro com range, depois fallback)
     async function loadTab(tabKey) {
         const config = SHEET_TABS[tabKey];
-        if (!config) return;
+        if (!config) {
+            console.error(`Aba não encontrada: ${tabKey}`);
+            return;
+        }
         
         activeSheetNameSpan.innerText = config.label;
         
@@ -621,7 +622,7 @@
         if (rows.length === 0) {
             fullData = [];
             filteredData = [];
-            tableHead.innerHTML = '<td><th>Sem dados</th></tr>';
+            tableHead.innerHTML = '<tr><th>Sem dados</th></tr>';
             tableBody.innerHTML = `<tr class="empty-message"><td colspan="5">Nenhum dado encontrado na aba "${config.label}". Verifique se a planilha contém dados a partir da linha 3 (colunas A-E).</td></tr>`;
             totalRecordsMainSpan.innerText = '0';
             totalValueMainSpan.innerText = formatBRL(0);
