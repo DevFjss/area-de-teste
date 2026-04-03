@@ -26,7 +26,6 @@
             margin: 0 auto;
         }
 
-        /* Cabeçalho principal - APENAS 2 CARDS */
         .main-header {
             display: flex;
             justify-content: space-between;
@@ -57,7 +56,7 @@
             margin-top: 6px;
         }
 
-        /* APENAS DOIS CARDS: contagem e valor total (sem repetição) */
+        /* APENAS DOIS CARDS */
         .stats-duo {
             display: flex;
             gap: 32px;
@@ -86,18 +85,7 @@
             line-height: 1.2;
         }
 
-        .stat-currency {
-            font-size: 0.9rem;
-            font-weight: 700;
-            background: #e1f0e5;
-            padding: 4px 12px;
-            border-radius: 36px;
-            display: inline-block;
-            margin-left: 8px;
-            color: #1e6f3f;
-        }
-
-        /* Abas (3: Manutenção, FAED, PNAE) */
+        /* Abas */
         .tabs-wrapper {
             margin-bottom: 24px;
         }
@@ -137,7 +125,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
 
-        /* Barra de pesquisa + indicadores de filtro (contagem e valor) */
+        /* Barra de pesquisa */
         .search-panel {
             background: white;
             border-radius: 20px;
@@ -214,7 +202,6 @@
             color: #1f7042;
         }
 
-        /* Nome da aba ativa acima da busca */
         .active-sheet-badge {
             display: inline-flex;
             align-items: center;
@@ -227,11 +214,6 @@
             color: #1f5a7e;
         }
 
-        .active-sheet-badge i {
-            font-size: 0.9rem;
-        }
-
-        /* Tabela responsiva */
         .table-wrapper {
             background: white;
             border-radius: 24px;
@@ -255,7 +237,6 @@
             color: #1f4970;
             border-bottom: 1px solid #e5edf5;
             font-size: 0.8rem;
-            letter-spacing: 0.3px;
         }
 
         .data-table td {
@@ -297,7 +278,6 @@
 </head>
 <body>
 <div class="dashboard-container">
-    <!-- HEADER com apenas 2 cards: Registros e Valor total -->
     <div class="main-header">
         <div class="title-area">
             <h1><i class="fas fa-chalkboard-user"></i> Pesquisar CDF</h1>
@@ -315,7 +295,6 @@
         </div>
     </div>
 
-    <!-- Abas: Manutenção 2026, FAED 2026, PNAE 2026 -->
     <div class="tabs-wrapper">
         <div class="tabs-list">
             <button class="tab-btn active" data-tab="manut"><i class="fas fa-tools"></i> Manutenção 2026</button>
@@ -324,7 +303,6 @@
         </div>
     </div>
 
-    <!-- Painel de pesquisa com indicador de aba ativa + contadores de filtro -->
     <div class="search-panel">
         <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
             <div class="active-sheet-badge" id="activeSheetBadge">
@@ -341,7 +319,6 @@
         </div>
     </div>
 
-    <!-- Tabela de resultados -->
     <div class="table-wrapper">
         <table class="data-table" id="dataTable">
             <thead id="tableHead">
@@ -352,27 +329,31 @@
             </tbody>
         </table>
     </div>
-    <footer>Fonte: Google Sheets · Filtro automático em todas as colunas (NTE, Município, Código, Unidade Escolar, Valor) · Atualização dinâmica</footer>
+    <footer>Fonte: Google Sheets · Dados iniciando na linha 3 de cada aba · Filtro automático em todas as colunas</footer>
 </div>
 
 <script>
     // CONFIGURAÇÃO GOOGLE SHEETS
     const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
-    // Abas corretas: geradorManut2026, geradorFaed2026, geradorPnae2026
+    
+    // Abas: todas com a MESMA ESTRUTURA (colunas A-E: NTE, Município, Código Sec, Unidade Escolar, Valor)
+    // Os dados começam na LINHA 3 de cada aba (linhas 1 e 2 são cabeçalhos/títulos)
     const SHEET_TABS = {
         manut: { sheetName: 'geradorManut2026', label: 'Manutenção 2026' },
         faed: { sheetName: 'geradorFaed2026', label: 'FAED 2026' },
         pnae: { sheetName: 'geradorPnae2026', label: 'PNAE 2026' }
     };
     
-    // Estado global
-    let currentTabKey = 'manut';      // 'manut', 'faed', 'pnae'
-    let currentColumns = [];           // array de strings (ex: ['NTE', 'Município', 'Código Sec', 'Unidade Escolar', 'Valor'])
-    let fullData = [];                 // objetos com todas as linhas
-    let filteredData = [];
-    let currentValueColumn = null;     // nome da coluna que contém valor
+    // Nomes padronizados das colunas (A até E)
+    const STANDARD_COLUMNS = ['NTE', 'Município', 'Código Sec', 'Unidade Escolar', 'Valor'];
     
-    // Elementos DOM
+    let currentTabKey = 'manut';
+    let currentColumns = [...STANDARD_COLUMNS];
+    let fullData = [];
+    let filteredData = [];
+    let currentValueColumn = 'Valor';
+    
+    // DOM elements
     const searchInput = document.getElementById('globalSearch');
     const filteredRecordsSpan = document.getElementById('filteredRecords');
     const filteredValueSpan = document.getElementById('filteredValue');
@@ -382,47 +363,77 @@
     const tableBody = document.getElementById('tableBody');
     const activeSheetNameSpan = document.getElementById('activeSheetName');
     
-    // Função para buscar dados de uma aba específica via CSV (método confiável e rápido)
+    // Função para buscar dados da planilha IGNORANDO as duas primeiras linhas (linha 1 e 2 são títulos)
+    // Utilizando Google Sheets API com range para pular cabeçalhos
     async function fetchSheetData(sheetName) {
+        try {
+            // Usando a API do Google Sheets com range A3:E (começa na linha 3 até o final)
+            // Formato: https://docs.google.com/spreadsheets/d/{ID}/gviz/tq?tqx=out:csv&sheet={sheet}&range=A3:E
+            const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&range=A3:E`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const csvText = await response.text();
+            
+            // Parse do CSV
+            const parsed = parseCSV(csvText);
+            if (!parsed || parsed.length === 0) {
+                return { rows: [] };
+            }
+            
+            // parsed contém as linhas a partir da linha 3 (já pulamos as 2 primeiras via range)
+            // Mapear para objetos usando as colunas padronizadas
+            const rows = parsed.map(row => {
+                const obj = {};
+                STANDARD_COLUMNS.forEach((col, idx) => {
+                    let cell = (idx < row.length) ? row[idx] : '';
+                    obj[col] = cell;
+                });
+                return obj;
+            }).filter(row => {
+                // Filtrar linhas completamente vazias ou onde NTE está vazio
+                const hasData = Object.values(row).some(v => v && v.toString().trim() !== "");
+                return hasData;
+            });
+            
+            return { rows: rows };
+        } catch (err) {
+            console.error(`Erro ao buscar aba ${sheetName}:`, err);
+            return { rows: [] };
+        }
+    }
+    
+    // Fallback: se o range não funcionar, busca tudo e pula manualmente as 2 primeiras linhas
+    async function fetchSheetDataFallback(sheetName) {
         try {
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const csvText = await response.text();
             const parsed = parseCSV(csvText);
-            if (!parsed || parsed.length < 2) {
-                return { columns: [], rows: [] };
+            if (!parsed || parsed.length < 3) {
+                return { rows: [] };
             }
-            // Primeira linha = cabeçalhos
-            let headers = parsed[0].map(h => h.trim());
-            
-            // FORÇAR APENAS AS PRIMEIRAS 5 COLUNAS (A até E): NTE, Município, Código Sec, Unidade Escolar, Valor
-            // Se houver mais colunas, limitamos às 5 primeiras
-            const expectedCols = ['NTE', 'Município', 'Código Sec', 'Unidade Escolar', 'Valor'];
-            let finalHeaders = [];
-            if (headers.length >= 5) {
-                finalHeaders = headers.slice(0, 5);
-            } else {
-                finalHeaders = headers;
-            }
-            
-            const rows = parsed.slice(1).map(row => {
+            // Pular as 2 primeiras linhas (índice 0 e 1)
+            const dataRows = parsed.slice(2);
+            const rows = dataRows.map(row => {
                 const obj = {};
-                finalHeaders.forEach((h, idx) => {
+                STANDARD_COLUMNS.forEach((col, idx) => {
                     let cell = (idx < row.length) ? row[idx] : '';
-                    obj[h] = cell;
+                    obj[col] = cell;
                 });
                 return obj;
-            }).filter(row => Object.values(row).some(v => v && v.toString().trim() !== ""));
-            
-            return { columns: finalHeaders, rows: rows };
+            }).filter(row => {
+                const hasData = Object.values(row).some(v => v && v.toString().trim() !== "");
+                return hasData;
+            });
+            return { rows: rows };
         } catch (err) {
-            console.error(`Erro ao buscar aba ${sheetName}:`, err);
-            return { columns: [], rows: [] };
+            console.error(`Fallback error:`, err);
+            return { rows: [] };
         }
     }
     
-    // Parse CSV manual robusto (respeita aspas)
+    // Parse CSV robusto
     function parseCSV(csvStr) {
         const lines = csvStr.split(/\r?\n/);
         const result = [];
@@ -443,7 +454,6 @@
                 }
             }
             row.push(current.trim());
-            // Limpar aspas extras
             const cleanedRow = row.map(cell => {
                 if (cell.startsWith('"') && cell.endsWith('"')) return cell.slice(1, -1);
                 return cell;
@@ -453,25 +463,21 @@
         return result;
     }
     
-    // Extrair valor numérico de string ou número, tratando formato brasileiro (vírgula decimal, pontos de milhar, R$)
+    // Extrair valor numérico (formato brasileiro)
     function extractNumericValue(value) {
         if (value === undefined || value === null) return 0;
         let str = value.toString().trim();
         if (str === "") return 0;
-        // Remove R$ e espaços
         let cleaned = str.replace(/R\$/, '').replace(/€/g, '').trim();
-        // Converte vírgula decimal e remove pontos de milhar
         cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-        // Remove tudo que não for número, ponto ou sinal de menos
         const numeric = parseFloat(cleaned.replace(/[^\d.-]/g, ''));
         return isNaN(numeric) ? 0 : numeric;
     }
     
-    // Formatar número como inteiro (para NTE) - remove decimais
+    // Formatar como inteiro para NTE
     function formatAsInteger(value) {
         if (value === undefined || value === null) return '';
         let str = value.toString().trim();
-        // Extrair apenas números (inclui sinal negativo se houver, mas NTE é positivo)
         const numericMatch = str.match(/-?\d+/);
         if (numericMatch) {
             return parseInt(numericMatch[0], 10).toString();
@@ -484,39 +490,22 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(value);
     }
     
-    // Identificar a coluna que contém valores monetários (deve ser a coluna 'Valor' ou similar)
-    function findValueColumnFromColumns(cols) {
-        if (!cols || cols.length === 0) return null;
-        // Priorizar exatamente 'Valor'
-        const exactValor = cols.find(c => c.toLowerCase() === 'valor');
-        if (exactValor) return exactValor;
-        // Se não, procurar por qualquer coluna que contenha 'valor' ou 'vlr'
-        const lowerCols = cols.map(c => c.toLowerCase());
-        let idx = lowerCols.findIndex(c => c.includes('valor') || c === 'vlr');
-        if (idx === -1 && cols.length > 0) {
-            // fallback: última coluna (geralmente é o valor)
-            return cols[cols.length-1];
-        }
-        return cols[idx];
-    }
-    
-    // Calcular soma total a partir de uma lista de dados e nome da coluna valor
-    function sumTotalFromData(data, valueCol) {
-        if (!valueCol) return 0;
+    // Soma total
+    function sumTotalFromData(data) {
         return data.reduce((acc, row) => {
-            return acc + extractNumericValue(row[valueCol]);
+            return acc + extractNumericValue(row['Valor']);
         }, 0);
     }
     
-    // Atualizar cards principais (total de registros e valor total da aba SEM filtro)
+    // Atualizar cards principais
     function updateMainCards() {
         const totalRegisters = fullData.length;
-        const totalSum = sumTotalFromData(fullData, currentValueColumn);
+        const totalSum = sumTotalFromData(fullData);
         totalRecordsMainSpan.innerText = totalRegisters.toLocaleString('pt-BR');
         totalValueMainSpan.innerText = formatBRL(totalSum);
     }
     
-    // Filtro automático em qualquer coluna (busca texto em todos os campos)
+    // Filtro automático em qualquer coluna
     function applyFilter(term) {
         if (!term.trim()) {
             filteredData = [...fullData];
@@ -529,25 +518,23 @@
                 });
             });
         }
-        // Atualizar contadores de filtro
-        const filteredSum = sumTotalFromData(filteredData, currentValueColumn);
+        const filteredSum = sumTotalFromData(filteredData);
         filteredRecordsSpan.innerText = filteredData.length.toLocaleString('pt-BR');
         filteredValueSpan.innerText = formatBRL(filteredSum);
-        // Renderizar tabela com os dados filtrados
-        renderTable(filteredData, currentColumns, currentValueColumn);
+        renderTable(filteredData);
     }
     
-    // Renderizar tabela com colunas A até E (NTE, Município, Código Sec, Unidade Escolar, Valor)
-    function renderTable(data, columns, valueCol) {
-        if (!columns || columns.length === 0) {
+    // Renderizar tabela com as 5 colunas padronizadas
+    function renderTable(data) {
+        if (!STANDARD_COLUMNS.length) {
             tableHead.innerHTML = '<tr><th>Sem colunas</th></tr>';
-            tableBody.innerHTML = '<tr class="empty-message"><td colspan="1">Nenhum dado disponível na planilha.</td></tr>';
+            tableBody.innerHTML = '<tr class="empty-message"><td colspan="1">Nenhum dado disponível</td></tr>';
             return;
         }
         
         // Cabeçalho
         const headerRow = document.createElement('tr');
-        columns.forEach(col => {
+        STANDARD_COLUMNS.forEach(col => {
             const th = document.createElement('th');
             th.innerText = col;
             headerRow.appendChild(th);
@@ -558,7 +545,7 @@
         if (data.length === 0) {
             const emptyRow = document.createElement('tr');
             const td = document.createElement('td');
-            td.colSpan = columns.length;
+            td.colSpan = STANDARD_COLUMNS.length;
             td.className = 'empty-message';
             td.innerText = 'Nenhum registro encontrado com o filtro atual.';
             emptyRow.appendChild(td);
@@ -570,80 +557,90 @@
         const fragment = document.createDocumentFragment();
         for (const row of data) {
             const tr = document.createElement('tr');
-            for (let i = 0; i < columns.length; i++) {
-                const col = columns[i];
-                const td = document.createElement('td');
-                let cellValue = row[col] !== undefined && row[col] !== null ? row[col] : '';
-                
-                // Tratamento especial: se for a primeira coluna (NTE), formatar como inteiro (sem casas decimais)
-                if (i === 0 && col.toLowerCase().includes('nte')) {
-                    cellValue = formatAsInteger(cellValue);
-                }
-                // Se for a coluna de valor, formatar como moeda e destacar
-                else if (col === valueCol && cellValue !== '') {
-                    const numVal = extractNumericValue(cellValue);
-                    if (!isNaN(numVal)) {
-                        cellValue = formatBRL(numVal);
-                        td.className = 'valor-highlight';
-                    }
-                }
-                td.innerText = cellValue;
-                tr.appendChild(td);
-            }
+            // Coluna 0: NTE (formatar como inteiro)
+            let nteValue = row['NTE'] !== undefined ? row['NTE'] : '';
+            const tdNTE = document.createElement('td');
+            tdNTE.innerText = formatAsInteger(nteValue);
+            tr.appendChild(tdNTE);
+            
+            // Coluna 1: Município
+            const tdMun = document.createElement('td');
+            tdMun.innerText = row['Município'] !== undefined ? row['Município'] : '';
+            tr.appendChild(tdMun);
+            
+            // Coluna 2: Código Sec (exibir como número/texto puro)
+            const tdCod = document.createElement('td');
+            tdCod.innerText = row['Código Sec'] !== undefined ? row['Código Sec'] : '';
+            tr.appendChild(tdCod);
+            
+            // Coluna 3: Unidade Escolar
+            const tdEscola = document.createElement('td');
+            tdEscola.innerText = row['Unidade Escolar'] !== undefined ? row['Unidade Escolar'] : '';
+            tr.appendChild(tdEscola);
+            
+            // Coluna 4: Valor (formatar como moeda)
+            const tdValor = document.createElement('td');
+            let valorRaw = row['Valor'] !== undefined ? row['Valor'] : '';
+            const numVal = extractNumericValue(valorRaw);
+            tdValor.innerText = formatBRL(numVal);
+            tdValor.className = 'valor-highlight';
+            tr.appendChild(tdValor);
+            
             fragment.appendChild(tr);
         }
         tableBody.innerHTML = '';
         tableBody.appendChild(fragment);
     }
     
-    // Carregar uma aba específica e resetar todos os estados + filtro
+    // Carregar aba (tenta primeiro com range, depois fallback)
     async function loadTab(tabKey) {
         const config = SHEET_TABS[tabKey];
         if (!config) return;
         
-        // Atualizar badge do nome da aba
         activeSheetNameSpan.innerText = config.label;
         
-        // Mostrar loading na tabela
+        // Mostrar loading
         tableHead.innerHTML = '<tr><th>🔄 Carregando...</th></tr>';
-        tableBody.innerHTML = '<tr class="empty-message"><td colspan="5">Aguarde, carregando dados da planilha...</td></tr>';
+        tableBody.innerHTML = '<tr class="empty-message"><td colspan="5">Aguarde, carregando dados da planilha (ignorando linhas de título)...</td></tr>';
         filteredRecordsSpan.innerText = '0';
         filteredValueSpan.innerText = formatBRL(0);
         
-        // Buscar dados da planilha
-        const { columns, rows } = await fetchSheetData(config.sheetName);
-        if (!columns.length) {
-            currentColumns = [];
+        // Tentar primeiro com range A3:E (pula linhas 1 e 2)
+        let result = await fetchSheetData(config.sheetName);
+        let rows = result.rows;
+        
+        // Se não veio nenhum dado, tentar fallback (pular manualmente as 2 primeiras linhas)
+        if (rows.length === 0) {
+            console.log("Tentando fallback para aba", config.sheetName);
+            result = await fetchSheetDataFallback(config.sheetName);
+            rows = result.rows;
+        }
+        
+        if (rows.length === 0) {
             fullData = [];
             filteredData = [];
-            currentValueColumn = null;
-            tableHead.innerHTML = '<tr><th>Erro</th></tr>';
-            tableBody.innerHTML = `<tr class="empty-message"><td colspan="3">Não foi possível carregar a aba "${config.sheetName}". Verifique se a planilha está publicada e o ID correto.</td></tr>`;
+            tableHead.innerHTML = '<td><th>Sem dados</th></tr>';
+            tableBody.innerHTML = `<tr class="empty-message"><td colspan="5">Nenhum dado encontrado na aba "${config.label}". Verifique se a planilha contém dados a partir da linha 3 (colunas A-E).</td></tr>`;
             totalRecordsMainSpan.innerText = '0';
             totalValueMainSpan.innerText = formatBRL(0);
+            filteredRecordsSpan.innerText = '0';
+            filteredValueSpan.innerText = formatBRL(0);
             return;
         }
         
-        // Atualizar estado
-        currentColumns = columns;
         fullData = rows;
-        currentValueColumn = findValueColumnFromColumns(columns);
-        // Reset do campo de busca
         searchInput.value = '';
-        // Aplicar filtro vazio (exibe tudo)
         applyFilter('');
-        // Atualizar cards principais
         updateMainCards();
     }
     
-    // Eventos de troca de aba
+    // Troca de abas
     function setupTabSwitching() {
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.getAttribute('data-tab');
                 if (tabId === currentTabKey) return;
-                // atualizar classe active
                 tabBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentTabKey = tabId;
@@ -652,7 +649,7 @@
         });
     }
     
-    // Evento de busca com debounce rápido
+    // Busca com debounce
     let debounceTimer;
     function setupSearch() {
         searchInput.addEventListener('input', (e) => {
@@ -667,7 +664,6 @@
     async function init() {
         setupTabSwitching();
         setupSearch();
-        // Carregar aba padrão: Manutenção 2026
         await loadTab('manut');
     }
     
