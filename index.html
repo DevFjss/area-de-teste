@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Dashboard CDF - Manutenção / FAED / PNAE 2026</title>
-    <!-- Google Fonts e ícones para melhor aparência -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <title>CDF - Manutenção / FAED / PNAE 2026 | Filtro Rápido</title>
+    <!-- Google Fonts + Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- SheetJS para parse robusto caso precise, mas usaremos fetch direto CSV -->
     <style>
         * {
             margin: 0;
@@ -17,161 +16,167 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
-            color: #1e293b;
-            padding: 24px 20px;
+            background: #f4f7fc;
+            color: #1a2c3e;
+            padding: 28px 24px;
         }
 
-        .container {
-            max-width: 1400px;
+        .dashboard-container {
+            max-width: 1440px;
             margin: 0 auto;
         }
 
-        /* Cabeçalho estilo gestão */
-        .header {
-            background: white;
-            border-radius: 28px;
-            padding: 20px 28px;
-            margin-bottom: 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.05);
+        /* Cabeçalho principal */
+        .main-header {
             display: flex;
-            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #e9eef3;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 28px;
+            background: white;
+            padding: 20px 28px;
+            border-radius: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #e2edf2;
         }
 
-        .title-section h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+        .title-area h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            background: linear-gradient(145deg, #1a4a6e, #0e2f48);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.5px;
         }
 
-        .title-section p {
-            color: #5b6e8c;
-            font-size: 0.85rem;
-            margin-top: 4px;
+        .title-area p {
+            font-size: 0.8rem;
+            color: #5a6e85;
+            margin-top: 6px;
         }
 
-        .stats-cards {
+        /* DOIS CARDS APENAS: contagem e valor total */
+        .stats-duo {
             display: flex;
-            gap: 24px;
-            background: #f8fafc;
-            padding: 8px 20px;
+            gap: 32px;
+            background: #f8fafd;
+            padding: 10px 28px;
             border-radius: 60px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #e0e8f0;
         }
 
-        .stat-item {
+        .stat-card {
             text-align: center;
         }
 
         .stat-label {
             font-size: 0.7rem;
-            text-transform: uppercase;
             font-weight: 600;
-            color: #4a5b7a;
-            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #4f6f8f;
+            letter-spacing: 0.6px;
         }
 
         .stat-number {
-            font-size: 1.9rem;
+            font-size: 2rem;
             font-weight: 800;
-            color: #0f2b3d;
+            color: #0e3b5c;
             line-height: 1.2;
         }
 
         .stat-currency {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #2c6e2f;
-            background: #e6f4ea;
+            font-size: 0.9rem;
+            font-weight: 700;
+            background: #e1f0e5;
+            padding: 4px 12px;
+            border-radius: 36px;
             display: inline-block;
-            padding: 2px 10px;
-            border-radius: 30px;
-            margin-left: 6px;
+            margin-left: 8px;
+            color: #1e6f3f;
         }
 
-        /* Tabs estilo moderno */
-        .tabs {
+        /* Abas (3: Manutenção, FAED, PNAE) */
+        .tabs-wrapper {
+            margin-bottom: 24px;
+        }
+
+        .tabs-list {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             background: white;
+            width: fit-content;
             padding: 6px 12px;
             border-radius: 60px;
-            margin-bottom: 28px;
-            width: fit-content;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e2edf2;
+            border: 1px solid #e2eaf1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
 
         .tab-btn {
             background: transparent;
             border: none;
-            padding: 10px 28px;
-            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 28px;
             border-radius: 40px;
             cursor: pointer;
-            transition: 0.2s;
-            color: #3b4e6b;
-            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            color: #3f5a77;
         }
 
         .tab-btn i {
             margin-right: 8px;
+            font-size: 0.9rem;
         }
 
         .tab-btn.active {
-            background: #1e4668;
+            background: #1f5780;
             color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
 
-        /* Barra de pesquisa e contadores */
-        .search-bar-wrapper {
+        /* Barra de pesquisa + indicadores de filtro (contagem e valor) */
+        .search-panel {
             background: white;
             border-radius: 20px;
-            padding: 12px 20px;
-            margin-bottom: 24px;
+            padding: 12px 24px;
+            margin-bottom: 28px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
-            border: 1px solid #e9edf2;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            gap: 18px;
+            border: 1px solid #e9eff5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
         }
 
         .search-box {
-            flex: 2;
-            min-width: 240px;
+            flex: 3;
+            min-width: 260px;
             display: flex;
             align-items: center;
-            background: #f8fafd;
+            background: #f8fafc;
             border-radius: 48px;
-            padding: 0 16px;
-            border: 1px solid #dce3ec;
+            border: 1px solid #dce5ef;
+            padding: 0 18px;
             transition: 0.2s;
         }
 
         .search-box:focus-within {
-            border-color: #2c6e9e;
-            box-shadow: 0 0 0 3px rgba(44,110,158,0.1);
+            border-color: #2c7cb6;
+            box-shadow: 0 0 0 3px rgba(44,124,182,0.1);
         }
 
         .search-box i {
-            color: #8ba0bc;
-            font-size: 1.1rem;
+            color: #8ea3bd;
+            font-size: 1rem;
         }
 
         .search-box input {
             width: 100%;
-            padding: 12px 14px;
+            padding: 12px 12px;
             border: none;
             background: transparent;
             font-size: 0.9rem;
@@ -179,50 +184,60 @@
             font-family: 'Inter', sans-serif;
         }
 
-        .info-counters {
+        .filter-stats {
             display: flex;
             gap: 28px;
             background: #f1f5f9;
-            padding: 6px 24px;
+            padding: 6px 28px;
             border-radius: 48px;
         }
 
-        .counter-chip {
+        .filter-chip {
             display: flex;
             align-items: baseline;
             gap: 8px;
         }
 
-        .counter-chip span:first-child {
+        .filter-chip span:first-child {
             font-size: 0.75rem;
             font-weight: 500;
-            color: #4a627a;
+            color: #4f6f8f;
         }
 
-        .counter-chip span:last-child {
-            font-size: 1.4rem;
+        .filter-chip span:last-child {
+            font-size: 1.5rem;
             font-weight: 800;
-            color: #1f3b4c;
+            color: #1e4a76;
         }
 
-        .valor-chip {
-            background: #e9f3eb;
-            border-radius: 32px;
-            padding: 4px 16px;
+        .filter-chip.valor span:last-child {
+            color: #1f7042;
         }
 
-        .valor-chip span:first-child {
+        /* Nome da aba ativa acima da busca */
+        .active-sheet-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eef3fc;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #2a6e2f;
+            color: #1f5a7e;
+        }
+
+        .active-sheet-badge i {
+            font-size: 0.9rem;
         }
 
         /* Tabela responsiva */
-        .table-container {
+        .table-wrapper {
             background: white;
             border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #eef3f8;
             overflow-x: auto;
-            border: 1px solid #ecf1f7;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.02);
         }
 
         .data-table {
@@ -235,151 +250,160 @@
         .data-table th {
             text-align: left;
             padding: 16px 16px;
-            background: #f9fbfd;
-            font-weight: 600;
-            color: #1f3a57;
-            border-bottom: 1px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            background-color: #f9fbfd;
+            background: #fbfdff;
+            font-weight: 700;
+            color: #1f4970;
+            border-bottom: 1px solid #e5edf5;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
         }
 
         .data-table td {
             padding: 12px 16px;
-            border-bottom: 1px solid #f0f4f9;
-            color: #253c5c;
+            border-bottom: 1px solid #f0f5fa;
+            color: #2c405c;
         }
 
         .data-table tr:hover td {
-            background-color: #fafcff;
+            background-color: #fafeff;
         }
 
-        .valor-monetario {
+        .valor-highlight {
             font-weight: 700;
-            color: #1f6e43;
-            letter-spacing: 0.2px;
+            color: #1f6e3f;
         }
 
-        .empty-row td {
+        .empty-message td {
             text-align: center;
-            padding: 48px;
-            color: #7d8eaa;
+            padding: 56px 20px;
+            color: #7b94b0;
             font-style: italic;
         }
 
         footer {
+            margin-top: 30px;
             text-align: center;
-            margin-top: 28px;
             font-size: 0.7rem;
-            color: #7890aa;
+            color: #8ba0bc;
         }
 
-        @media (max-width: 680px) {
-            .stats-cards { padding: 6px 12px; gap: 12px; }
-            .stat-number { font-size: 1.4rem; }
-            .counter-chip span:last-child { font-size: 1.1rem; }
+        @media (max-width: 750px) {
+            body { padding: 16px; }
+            .stats-duo { padding: 5px 18px; gap: 18px; }
+            .stat-number { font-size: 1.5rem; }
+            .filter-chip span:last-child { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="title-section">
+<div class="dashboard-container">
+    <!-- HEADER com apenas 2 cards: Registros e Valor total (sem repetição) -->
+    <div class="main-header">
+        <div class="title-area">
             <h1><i class="fas fa-chalkboard-user"></i> Pesquisar CDF</h1>
-            <p>Manutenção • FAED • PNAE 2026 | Dados dinâmicos via Google Sheets</p>
+            <p>Dados dinâmicos · Filtro automático em qualquer coluna</p>
         </div>
-        <div class="stats-cards" id="globalStats">
-            <div class="stat-item"><div class="stat-label">Registros totais</div><div class="stat-number" id="totalRecordsCount">0</div></div>
-            <div class="stat-item"><div class="stat-label">Valor total</div><div class="stat-number" id="totalValueSum">0,00</div></div>
-        </div>
-    </div>
-
-    <!-- Abas: conforme solicitado: geradorManut2026, geradorFaed2026, geradorFaed2026 (duplicado? mas vou usar Manut, FAED, PNAE) 
-    mas o enunciado menciona "geradorManut2026, geradorFaed2026, geradorFaed2026" - acredito que o terceiro seja PNAE 2026, já que imagem mostra PNAE 2026. 
-    Portanto: Manutenção 2026 (sheet: geradorManut2026), FAED 2026 (sheet: geradorFaed2026), PNAE 2026 (sheet: geradorPnae2026). vou adotar esse padrão -->
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="manut"><i class="fas fa-tools"></i> Manutenção 2026</button>
-        <button class="tab-btn" data-tab="faed"><i class="fas fa-landmark"></i> FAED 2026</button>
-        <button class="tab-btn" data-tab="pnae"><i class="fas fa-utensils"></i> PNAE 2026</button>
-    </div>
-
-    <!-- Barra de busca e contadores por aba -->
-    <div class="search-bar-wrapper">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Filtrar qualquer coluna (NTE, Município, Código, Escola, Valor)...">
-        </div>
-        <div class="info-counters">
-            <div class="counter-chip"><span>📋 Registros</span><span id="filteredCount">0</span></div>
-            <div class="counter-chip valor-chip"><span>💰 Valor Total Filtrado</span><span id="filteredSum">0,00</span></div>
+        <div class="stats-duo">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-database"></i> TOTAL REGISTROS</div>
+                <div class="stat-number" id="totalRecordsMain">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-coins"></i> VALOR TOTAL</div>
+                <div class="stat-number" id="totalValueMain">R$ 0,00</div>
+            </div>
         </div>
     </div>
 
-    <div class="table-container">
+    <!-- Abas: Manutenção 2026, FAED 2026, PNAE 2026 -->
+    <div class="tabs-wrapper">
+        <div class="tabs-list">
+            <button class="tab-btn active" data-tab="manut"><i class="fas fa-tools"></i> Manutenção 2026</button>
+            <button class="tab-btn" data-tab="faed"><i class="fas fa-landmark"></i> FAED 2026</button>
+            <button class="tab-btn" data-tab="pnae"><i class="fas fa-utensils"></i> PNAE 2026</button>
+        </div>
+    </div>
+
+    <!-- Painel de pesquisa com indicador de aba ativa + contadores de filtro -->
+    <div class="search-panel">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div class="active-sheet-badge" id="activeSheetBadge">
+                <i class="fas fa-table-list"></i> <span id="activeSheetName">Manutenção 2026</span>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="globalSearch" placeholder="Pesquisa instantânea em qualquer coluna (NTE, Município, Código, Escola, Valor...)">
+            </div>
+        </div>
+        <div class="filter-stats">
+            <div class="filter-chip"><span><i class="fas fa-filter"></i> Registros filtrados</span><span id="filteredRecords">0</span></div>
+            <div class="filter-chip valor"><span>💰 Valor filtrado</span><span id="filteredValue">R$ 0,00</span></div>
+        </div>
+    </div>
+
+    <!-- Tabela de resultados -->
+    <div class="table-wrapper">
         <table class="data-table" id="dataTable">
-            <thead id="tableHeader">
+            <thead id="tableHead">
                 <tr><th>Carregando dados...</th></tr>
             </thead>
             <tbody id="tableBody">
-                <tr class="empty-row"><td colspan="5">Aguarde, buscando informações do Google Sheets...</td></tr>
+                <tr class="empty-message"><td colspan="5">Aguarde, carregando informações da planilha...</td></tr>
             </tbody>
         </table>
     </div>
-    <footer>Fonte: Google Sheets • Atualização automática via API pública. Filtro instantâneo em todas as colunas.</footer>
+    <footer>Fonte: Google Sheets · Filtro automático em todas as colunas (NTE, Município, Código, Unidade Escolar, Valor) · Atualização dinâmica</footer>
 </div>
 
 <script>
-    // Configurações da planilha
+    // CONFIGURAÇÃO GOOGLE SHEETS
     const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
-    // Nomes das abas conforme solicitado
-    const SHEETS_CONFIG = {
-        manut: { name: 'geradorManut2026', label: 'Manutenção 2026' },
-        faed: { name: 'geradorFaed2026', label: 'FAED 2026' },
-        pnae: { name: 'geradorPnae2026', label: 'PNAE 2026' }
+    // Abas corretas conforme solicitado: geradorManut2026, geradorFaed2026, geradorPnae2026
+    const SHEET_TABS = {
+        manut: { sheetName: 'geradorManut2026', label: 'Manutenção 2026' },
+        faed: { sheetName: 'geradorFaed2026', label: 'FAED 2026' },
+        pnae: { sheetName: 'geradorPnae2026', label: 'PNAE 2026' }
     };
     
     // Estado global
-    let currentTab = 'manut';      // manut, faed, pnae
-    let rawData = [];               // array de objetos brutos (colunas dinâmicas)
-    let columns = [];              // nomes das colunas
+    let currentTabKey = 'manut';      // 'manut', 'faed', 'pnae'
+    let currentColumns = [];           // array de strings (ex: ['NTE', 'Município', 'Código Sec', 'Unidade Escolar', 'Valor'])
+    let fullData = [];                 // objetos com todas as linhas
     let filteredData = [];
+    let currentValueColumn = null;     // nome da coluna que contém valor
     
     // Elementos DOM
-    const searchInput = document.getElementById('searchInput');
-    const filteredCountSpan = document.getElementById('filteredCount');
-    const filteredSumSpan = document.getElementById('filteredSum');
-    const totalRecordsCountSpan = document.getElementById('totalRecordsCount');
-    const totalValueSumSpan = document.getElementById('totalValueSum');
-    const tableHeader = document.getElementById('tableHeader');
+    const searchInput = document.getElementById('globalSearch');
+    const filteredRecordsSpan = document.getElementById('filteredRecords');
+    const filteredValueSpan = document.getElementById('filteredValue');
+    const totalRecordsMainSpan = document.getElementById('totalRecordsMain');
+    const totalValueMainSpan = document.getElementById('totalValueMain');
+    const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
+    const activeSheetNameSpan = document.getElementById('activeSheetName');
     
-    // Função para buscar dados de uma aba específica via Google Sheets API (publica)
-    // Usamos o endpoint CSV (mais rápido e leve). Exige que a planilha esteja publicada como CSV ou com permissão de leitura.
-    // URL: https://docs.google.com/spreadsheets/d/{ID}/gviz/tq?tqx=out:csv&sheet={sheetName}
-    // ou CSV direto: https://docs.google.com/spreadsheets/d/{ID}/export?format=csv&gid={sheetId} porém gid é variável.
-    // Melhor usar o método /gviz/tq?tqx=out:csv&sheet= que retorna CSV e é confiável.
+    // Função para buscar dados de uma aba específica via CSV (método confiável e rápido)
     async function fetchSheetData(sheetName) {
         try {
+            // URL usando gviz/tq para CSV estável
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status} - erro ao carregar ${sheetName}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const csvText = await response.text();
-            // Parse CSV manual para preservar vírgulas decimais e textos
             const parsed = parseCSV(csvText);
             if (!parsed || parsed.length < 2) {
                 return { columns: [], rows: [] };
             }
+            // Primeira linha = cabeçalhos
             const headers = parsed[0].map(h => h.trim());
             const rows = parsed.slice(1).map(row => {
                 const obj = {};
-                headers.forEach((header, idx) => {
-                    let val = row[idx] !== undefined ? row[idx] : '';
-                    // tentar tratar valores numéricos que venham com vírgula decimal e ponto milhar? 
-                    // mas o formato da planilha pode estar como número. Garantir conversão limpa para valores monetários.
-                    obj[header] = val;
+                headers.forEach((h, idx) => {
+                    let cell = row[idx] !== undefined ? row[idx] : '';
+                    obj[h] = cell;
                 });
                 return obj;
-            }).filter(row => Object.values(row).some(v => v && v.toString().trim() !== "")); // remove linhas totalmente vazias
+            }).filter(row => Object.values(row).some(v => v && v.toString().trim() !== ""));
             return { columns: headers, rows: rows };
         } catch (err) {
             console.error(`Erro ao buscar aba ${sheetName}:`, err);
@@ -387,10 +411,9 @@
         }
     }
     
-    // Função para parse de CSV respeitando aspas e separadores
-    function parseCSV(csvString) {
-        const regex = /(\s*"[^"]*"\s*|\s*[^,]*\s*)/g;
-        const lines = csvString.split(/\r?\n/);
+    // Parse CSV manual robusto (respeita aspas)
+    function parseCSV(csvStr) {
+        const lines = csvStr.split(/\r?\n/);
         const result = [];
         for (let line of lines) {
             if (line.trim() === "") continue;
@@ -409,7 +432,7 @@
                 }
             }
             row.push(current.trim());
-            // limpar aspas externas
+            // Limpar aspas extras
             const cleanedRow = row.map(cell => {
                 if (cell.startsWith('"') && cell.endsWith('"')) return cell.slice(1, -1);
                 return cell;
@@ -419,95 +442,98 @@
         return result;
     }
     
-    // Extrair valor numérico a partir de string ou número, tratando formato brasileiro (vírgula decimal)
+    // Extrair valor numérico de string ou número, tratando formato brasileiro (vírgula decimal, pontos de milhar, R$)
     function extractNumericValue(value) {
         if (value === undefined || value === null) return 0;
         let str = value.toString().trim();
         if (str === "") return 0;
-        // substituir vírgula decimal por ponto, remover pontos de milhar
-        let cleaned = str.replace(/\./g, '').replace(',', '.');
-        // Remove qualquer caractere não numérico exceto ponto e sinal de menos
-        let numeric = parseFloat(cleaned.replace(/[^\d.-]/g, ''));
-        if (isNaN(numeric)) return 0;
-        return numeric;
+        // Remove R$ e espaços
+        let cleaned = str.replace(/R\$/, '').replace(/€/g, '').trim();
+        // Converte vírgula decimal e remove pontos de milhar
+        cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        // Remove tudo que não for número, ponto ou sinal de menos
+        const numeric = parseFloat(cleaned.replace(/[^\d.-]/g, ''));
+        return isNaN(numeric) ? 0 : numeric;
     }
     
-    // Localizar coluna que contém valores monetários (padrões: "Valor", "VALOR", "valor total", "vlr")
-    function findValueColumn(cols) {
-        if (!cols || cols.length === 0) return null;
-        const lowerCols = cols.map(c => c.toLowerCase());
-        const idx = lowerCols.findIndex(c => c.includes('valor') || c === 'vlr' || c.includes('total') && c.includes('valor'));
-        if (idx !== -1) return cols[idx];
-        // fallback: última coluna numérica? mas melhor buscar coluna comum: 'Valor'
-        return cols.find(c => c.toLowerCase() === 'valor') || cols[cols.length-1];
-    }
-    
-    // Soma total de uma coluna específica
-    function sumValues(data, valueColName) {
-        if (!valueColName) return 0;
-        return data.reduce((acc, row) => {
-            const val = extractNumericValue(row[valueColName]);
-            return acc + val;
-        }, 0);
-    }
-    
-    // Atualizar contadores totais da aba (sem filtro)
-    function updateGlobalCounters(data, valueCol) {
-        const totalReg = data.length;
-        const totalVal = sumValues(data, valueCol);
-        totalRecordsCountSpan.innerText = totalReg.toLocaleString('pt-BR');
-        totalValueSumSpan.innerText = formatCurrencyBRL(totalVal);
-    }
-    
-    // Formatar moeda Real
-    function formatCurrencyBRL(value) {
+    // Formatar BRL
+    function formatBRL(value) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(value);
     }
     
-    // Filtrar dados baseado no texto de busca (pesquisa em todas as colunas)
-    function applyFilter(searchTerm) {
-        if (!searchTerm.trim()) {
-            filteredData = [...rawData];
+    // Identificar a coluna que contém valores monetários (procurando por 'Valor', 'VALOR', 'Vlr', 'Total', etc)
+    function findValueColumnFromColumns(cols) {
+        if (!cols || cols.length === 0) return null;
+        const lowerCols = cols.map(c => c.toLowerCase());
+        let idx = lowerCols.findIndex(c => c === 'valor' || c.includes('valor') || c === 'vlr' || c.includes('total') && c.includes('valor'));
+        if (idx === -1) idx = lowerCols.findIndex(c => c.includes('valor'));
+        if (idx === -1 && cols.length > 0) {
+            // fallback: última coluna pode conter valores
+            return cols[cols.length-1];
+        }
+        return cols[idx];
+    }
+    
+    // Calcular soma total a partir de uma lista de dados e nome da coluna valor
+    function sumTotalFromData(data, valueCol) {
+        if (!valueCol) return 0;
+        return data.reduce((acc, row) => {
+            return acc + extractNumericValue(row[valueCol]);
+        }, 0);
+    }
+    
+    // Atualizar cards principais (total de registros e valor total da aba SEM filtro)
+    function updateMainCards() {
+        const totalRegisters = fullData.length;
+        const totalSum = sumTotalFromData(fullData, currentValueColumn);
+        totalRecordsMainSpan.innerText = totalRegisters.toLocaleString('pt-BR');
+        totalValueMainSpan.innerText = formatBRL(totalSum);
+    }
+    
+    // Filtro automático em qualquer coluna (busca texto em todos os campos)
+    function applyFilter(term) {
+        if (!term.trim()) {
+            filteredData = [...fullData];
         } else {
-            const term = searchTerm.trim().toLowerCase();
-            filteredData = rawData.filter(row => {
-                return Object.values(row).some(cellValue => {
-                    if (cellValue === undefined || cellValue === null) return false;
-                    return cellValue.toString().toLowerCase().includes(term);
+            const lowerTerm = term.trim().toLowerCase();
+            filteredData = fullData.filter(row => {
+                return Object.values(row).some(cell => {
+                    if (cell === undefined || cell === null) return false;
+                    return cell.toString().toLowerCase().includes(lowerTerm);
                 });
             });
         }
-        // Atualizar contadores filtrados
-        const valueColumn = findValueColumn(columns);
-        const filteredSum = sumValues(filteredData, valueColumn);
-        filteredCountSpan.innerText = filteredData.length.toLocaleString('pt-BR');
-        filteredSumSpan.innerText = formatCurrencyBRL(filteredSum);
-        renderTable(filteredData, columns);
+        // Atualizar contadores de filtro
+        const filteredSum = sumTotalFromData(filteredData, currentValueColumn);
+        filteredRecordsSpan.innerText = filteredData.length.toLocaleString('pt-BR');
+        filteredValueSpan.innerText = formatBRL(filteredSum);
+        // Renderizar tabela com os dados filtrados
+        renderTable(filteredData, currentColumns, currentValueColumn);
     }
     
-    // Renderizar tabela com cabeçalho dinâmico
-    function renderTable(data, cols) {
-        if (!cols || cols.length === 0) {
-            tableHeader.innerHTML = '<tr><th>Sem dados</th></tr>';
-            tableBody.innerHTML = '<tr class="empty-row"><td colspan="3">Nenhuma coluna encontrada na planilha</td></tr>';
+    // Renderizar tabela com colunas dinâmicas (NTE, Municipio, Codigo Sec, Unidade Escola, Valor)
+    function renderTable(data, columns, valueCol) {
+        if (!columns || columns.length === 0) {
+            tableHead.innerHTML = '<tr><th>Sem colunas</th></tr>';
+            tableBody.innerHTML = '<tr class="empty-message"><td colspan="1">Nenhum dado disponível na planilha.</td></tr>';
             return;
         }
+        
         // Cabeçalho
         const headerRow = document.createElement('tr');
-        cols.forEach(col => {
+        columns.forEach(col => {
             const th = document.createElement('th');
             th.innerText = col;
             headerRow.appendChild(th);
         });
-        tableHeader.innerHTML = '';
-        tableHeader.appendChild(headerRow);
+        tableHead.innerHTML = '';
+        tableHead.appendChild(headerRow);
         
-        // Corpo
         if (data.length === 0) {
             const emptyRow = document.createElement('tr');
             const td = document.createElement('td');
-            td.colSpan = cols.length;
-            td.className = 'empty-row';
+            td.colSpan = columns.length;
+            td.className = 'empty-message';
             td.innerText = 'Nenhum registro encontrado com o filtro atual.';
             emptyRow.appendChild(td);
             tableBody.innerHTML = '';
@@ -515,113 +541,107 @@
             return;
         }
         
-        const valueColName = findValueColumn(cols);
-        const tbodyFragment = document.createDocumentFragment();
-        data.forEach(row => {
+        const fragment = document.createDocumentFragment();
+        for (const row of data) {
             const tr = document.createElement('tr');
-            cols.forEach(col => {
+            for (const col of columns) {
                 const td = document.createElement('td');
                 let cellValue = row[col] !== undefined && row[col] !== null ? row[col] : '';
-                // Se for a coluna de valor, aplicar estilo monetário
-                if (col === valueColName && cellValue !== '') {
+                // Se for a coluna de valor, formatar como moeda e destacar
+                if (col === valueCol && cellValue !== '') {
                     const numVal = extractNumericValue(cellValue);
-                    if (!isNaN(numVal) && numVal !== 0) {
-                        cellValue = formatCurrencyBRL(numVal);
-                        td.className = 'valor-monetario';
-                    } else if (typeof cellValue === 'string' && cellValue.trim() !== '') {
-                        // tenta manter valor bruto
-                        td.className = 'valor-monetario';
+                    if (!isNaN(numVal)) {
+                        cellValue = formatBRL(numVal);
+                        td.className = 'valor-highlight';
                     }
                 }
+                // Tratamento especial: para NTE e Código Sec que são numéricos, garantir exibição como número/texto
+                // (apenas exibição normal, sem formatação especial)
                 td.innerText = cellValue;
                 tr.appendChild(td);
-            });
-            tbodyFragment.appendChild(tr);
-        });
+            }
+            fragment.appendChild(tr);
+        }
         tableBody.innerHTML = '';
-        tableBody.appendChild(tbodyFragment);
+        tableBody.appendChild(fragment);
     }
     
-    // Carregar dados da aba atual e atualizar toda interface
-    async function loadTabData(tabId) {
-        const sheetConfig = SHEETS_CONFIG[tabId];
-        if (!sheetConfig) return;
-        // Mostrar loading
-        tableHeader.innerHTML = '<tr><th>🔄 Carregando...</th></tr>';
-        tableBody.innerHTML = '<tr class="empty-row"><td colspan="5">Buscando dados da planilha, aguarde...</td></tr>';
+    // Carregar uma aba específica e resetar todos os estados + filtro
+    async function loadTab(tabKey) {
+        const config = SHEET_TABS[tabKey];
+        if (!config) return;
         
-        const { columns: cols, rows } = await fetchSheetData(sheetConfig.name);
-        if (!cols.length) {
-            // Tabela vazia ou erro
-            columns = [];
-            rawData = [];
+        // Atualizar badge do nome da aba
+        activeSheetNameSpan.innerText = config.label;
+        
+        // Mostrar loading na tabela
+        tableHead.innerHTML = '<tr><th>🔄 Carregando...</th></tr>';
+        tableBody.innerHTML = '<tr class="empty-message"><td colspan="5>Aguarde, carregando dados da planilha...</td></tr>';
+        filteredRecordsSpan.innerText = '0';
+        filteredValueSpan.innerText = formatBRL(0);
+        
+        // Buscar dados da planilha
+        const { columns, rows } = await fetchSheetData(config.sheetName);
+        if (!columns.length) {
+            currentColumns = [];
+            fullData = [];
             filteredData = [];
-            tableHeader.innerHTML = '<tr><th>Erro / Dados não encontrados</th></tr>';
-            tableBody.innerHTML = `<tr class="empty-row"><td colspan="3">Não foi possível carregar a aba "${sheetConfig.name}". Verifique se o ID da planilha está correto e as abas são públicas (publicadas como CSV).</td></tr>`;
-            filteredCountSpan.innerText = '0';
-            filteredSumSpan.innerText = formatCurrencyBRL(0);
-            totalRecordsCountSpan.innerText = '0';
-            totalValueSumSpan.innerText = formatCurrencyBRL(0);
+            currentValueColumn = null;
+            tableHead.innerHTML = '<tr><th>Erro</th></tr>';
+            tableBody.innerHTML = `<tr class="empty-message"><td colspan="3">Não foi possível carregar a aba "${config.sheetName}". Verifique se a planilha está publicada e o ID correto.</td></tr>`;
+            totalRecordsMainSpan.innerText = '0';
+            totalValueMainSpan.innerText = formatBRL(0);
             return;
         }
         
-        columns = cols;
-        rawData = rows;
-        // Reset filtro
+        // Atualizar estado
+        currentColumns = columns;
+        fullData = rows;
+        currentValueColumn = findValueColumnFromColumns(columns);
+        // Reset do campo de busca
         searchInput.value = '';
-        // Aplicar filtro vazio
+        // Aplicar filtro vazio (exibe tudo)
         applyFilter('');
-        // Atualizar contadores globais (sem filtro)
-        const valueColumnGlobal = findValueColumn(columns);
-        updateGlobalCounters(rawData, valueColumnGlobal);
+        // Atualizar cards principais
+        updateMainCards();
     }
     
-    // Trocar abas com animação e recarregar
-    function switchTab(tabId) {
-        currentTab = tabId;
-        // Atualizar estilo dos botões
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            if (btn.getAttribute('data-tab') === tabId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        // Recarregar dados da nova aba
-        loadTabData(tabId);
-    }
-    
-    // Eventos
-    function initEventListeners() {
-        searchInput.addEventListener('input', (e) => {
-            applyFilter(e.target.value);
-        });
-        
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+    // Eventos de troca de aba
+    function setupTabSwitching() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
                 const tabId = btn.getAttribute('data-tab');
-                if (tabId === currentTab) return;
-                switchTab(tabId);
+                if (tabId === currentTabKey) return;
+                // atualizar classe active
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTabKey = tabId;
+                loadTab(currentTabKey);
             });
         });
     }
     
-    // Inicializar
+    // Evento de busca com debounce para performance (mas filtro instantâneo)
+    let debounceTimer;
+    function setupSearch() {
+        searchInput.addEventListener('input', (e) => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFilter(e.target.value);
+            }, 50); // resposta super rápida
+        });
+    }
+    
+    // Inicialização
     async function init() {
-        initEventListeners();
-        // Carregar aba inicial (manut)
-        await loadTabData('manut');
+        setupTabSwitching();
+        setupSearch();
+        // Carregar aba padrão: Manutenção 2026
+        await loadTab('manut');
     }
     
     init();
-    
-    // Tratamento extra para atualizar contadores ao aplicar filtro também o global? Já está ok.
-    // Melhorar extra: permitir busca em qualquer coluna e não diferenciar maiúsculas/minúsculas.
-    // Além disso, garantir que a coluna valor seja encontrada corretamente. 
-    // Caso a planilha tenha valores com "R$" ou símbolos, o extractNumericValue irá normalizar.
-    // O layout da tabela será exatamente como no exemplo: NTE, Município, Código Sec, Unidade Escolar, Valor.
-    // Contadores de "Registros" e "Valor total" ao lado da caixa de pesquisa mostram dinamicamente.
-    // também ao lado superior direito: total de registros e soma global da aba.
 </script>
 </body>
 </html>
