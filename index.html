@@ -26,7 +26,7 @@
             margin: 0 auto;
         }
 
-        /* Cabeçalho principal */
+        /* Cabeçalho principal - APENAS 2 CARDS */
         .main-header {
             display: flex;
             justify-content: space-between;
@@ -57,7 +57,7 @@
             margin-top: 6px;
         }
 
-        /* DOIS CARDS APENAS: contagem e valor total */
+        /* APENAS DOIS CARDS: contagem e valor total (sem repetição) */
         .stats-duo {
             display: flex;
             gap: 32px;
@@ -297,7 +297,7 @@
 </head>
 <body>
 <div class="dashboard-container">
-    <!-- HEADER com apenas 2 cards: Registros e Valor total (sem repetição) -->
+    <!-- HEADER com apenas 2 cards: Registros e Valor total -->
     <div class="main-header">
         <div class="title-area">
             <h1><i class="fas fa-chalkboard-user"></i> Pesquisar CDF</h1>
@@ -358,7 +358,7 @@
 <script>
     // CONFIGURAÇÃO GOOGLE SHEETS
     const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
-    // Abas corretas conforme solicitado: geradorManut2026, geradorFaed2026, geradorPnae2026
+    // Abas corretas: geradorManut2026, geradorFaed2026, geradorPnae2026
     const SHEET_TABS = {
         manut: { sheetName: 'geradorManut2026', label: 'Manutenção 2026' },
         faed: { sheetName: 'geradorFaed2026', label: 'FAED 2026' },
@@ -385,7 +385,6 @@
     // Função para buscar dados de uma aba específica via CSV (método confiável e rápido)
     async function fetchSheetData(sheetName) {
         try {
-            // URL usando gviz/tq para CSV estável
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -395,16 +394,28 @@
                 return { columns: [], rows: [] };
             }
             // Primeira linha = cabeçalhos
-            const headers = parsed[0].map(h => h.trim());
+            let headers = parsed[0].map(h => h.trim());
+            
+            // FORÇAR APENAS AS PRIMEIRAS 5 COLUNAS (A até E): NTE, Município, Código Sec, Unidade Escolar, Valor
+            // Se houver mais colunas, limitamos às 5 primeiras
+            const expectedCols = ['NTE', 'Município', 'Código Sec', 'Unidade Escolar', 'Valor'];
+            let finalHeaders = [];
+            if (headers.length >= 5) {
+                finalHeaders = headers.slice(0, 5);
+            } else {
+                finalHeaders = headers;
+            }
+            
             const rows = parsed.slice(1).map(row => {
                 const obj = {};
-                headers.forEach((h, idx) => {
-                    let cell = row[idx] !== undefined ? row[idx] : '';
+                finalHeaders.forEach((h, idx) => {
+                    let cell = (idx < row.length) ? row[idx] : '';
                     obj[h] = cell;
                 });
                 return obj;
             }).filter(row => Object.values(row).some(v => v && v.toString().trim() !== ""));
-            return { columns: headers, rows: rows };
+            
+            return { columns: finalHeaders, rows: rows };
         } catch (err) {
             console.error(`Erro ao buscar aba ${sheetName}:`, err);
             return { columns: [], rows: [] };
@@ -456,19 +467,34 @@
         return isNaN(numeric) ? 0 : numeric;
     }
     
+    // Formatar número como inteiro (para NTE) - remove decimais
+    function formatAsInteger(value) {
+        if (value === undefined || value === null) return '';
+        let str = value.toString().trim();
+        // Extrair apenas números (inclui sinal negativo se houver, mas NTE é positivo)
+        const numericMatch = str.match(/-?\d+/);
+        if (numericMatch) {
+            return parseInt(numericMatch[0], 10).toString();
+        }
+        return str;
+    }
+    
     // Formatar BRL
     function formatBRL(value) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(value);
     }
     
-    // Identificar a coluna que contém valores monetários (procurando por 'Valor', 'VALOR', 'Vlr', 'Total', etc)
+    // Identificar a coluna que contém valores monetários (deve ser a coluna 'Valor' ou similar)
     function findValueColumnFromColumns(cols) {
         if (!cols || cols.length === 0) return null;
+        // Priorizar exatamente 'Valor'
+        const exactValor = cols.find(c => c.toLowerCase() === 'valor');
+        if (exactValor) return exactValor;
+        // Se não, procurar por qualquer coluna que contenha 'valor' ou 'vlr'
         const lowerCols = cols.map(c => c.toLowerCase());
-        let idx = lowerCols.findIndex(c => c === 'valor' || c.includes('valor') || c === 'vlr' || c.includes('total') && c.includes('valor'));
-        if (idx === -1) idx = lowerCols.findIndex(c => c.includes('valor'));
+        let idx = lowerCols.findIndex(c => c.includes('valor') || c === 'vlr');
         if (idx === -1 && cols.length > 0) {
-            // fallback: última coluna pode conter valores
+            // fallback: última coluna (geralmente é o valor)
             return cols[cols.length-1];
         }
         return cols[idx];
@@ -511,7 +537,7 @@
         renderTable(filteredData, currentColumns, currentValueColumn);
     }
     
-    // Renderizar tabela com colunas dinâmicas (NTE, Municipio, Codigo Sec, Unidade Escola, Valor)
+    // Renderizar tabela com colunas A até E (NTE, Município, Código Sec, Unidade Escolar, Valor)
     function renderTable(data, columns, valueCol) {
         if (!columns || columns.length === 0) {
             tableHead.innerHTML = '<tr><th>Sem colunas</th></tr>';
@@ -544,19 +570,23 @@
         const fragment = document.createDocumentFragment();
         for (const row of data) {
             const tr = document.createElement('tr');
-            for (const col of columns) {
+            for (let i = 0; i < columns.length; i++) {
+                const col = columns[i];
                 const td = document.createElement('td');
                 let cellValue = row[col] !== undefined && row[col] !== null ? row[col] : '';
+                
+                // Tratamento especial: se for a primeira coluna (NTE), formatar como inteiro (sem casas decimais)
+                if (i === 0 && col.toLowerCase().includes('nte')) {
+                    cellValue = formatAsInteger(cellValue);
+                }
                 // Se for a coluna de valor, formatar como moeda e destacar
-                if (col === valueCol && cellValue !== '') {
+                else if (col === valueCol && cellValue !== '') {
                     const numVal = extractNumericValue(cellValue);
                     if (!isNaN(numVal)) {
                         cellValue = formatBRL(numVal);
                         td.className = 'valor-highlight';
                     }
                 }
-                // Tratamento especial: para NTE e Código Sec que são numéricos, garantir exibição como número/texto
-                // (apenas exibição normal, sem formatação especial)
                 td.innerText = cellValue;
                 tr.appendChild(td);
             }
@@ -576,7 +606,7 @@
         
         // Mostrar loading na tabela
         tableHead.innerHTML = '<tr><th>🔄 Carregando...</th></tr>';
-        tableBody.innerHTML = '<tr class="empty-message"><td colspan="5>Aguarde, carregando dados da planilha...</td></tr>';
+        tableBody.innerHTML = '<tr class="empty-message"><td colspan="5">Aguarde, carregando dados da planilha...</td></tr>';
         filteredRecordsSpan.innerText = '0';
         filteredValueSpan.innerText = formatBRL(0);
         
@@ -622,14 +652,14 @@
         });
     }
     
-    // Evento de busca com debounce para performance (mas filtro instantâneo)
+    // Evento de busca com debounce rápido
     let debounceTimer;
     function setupSearch() {
         searchInput.addEventListener('input', (e) => {
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 applyFilter(e.target.value);
-            }, 50); // resposta super rápida
+            }, 50);
         });
     }
     
