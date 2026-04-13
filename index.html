@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script>
-    // Verifica se o usuário está logado
-    const usuarioLogado = sessionStorage.getItem('usuarioLogado');
-    if (!usuarioLogado) {
-        window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
-    }
-</script>
+
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -257,6 +251,7 @@
         </div>
         <div class="status"><i class="fab fa-google"></i> Google Sheets Integrado</div>
     </div>
+
     <div class="tabs">
         <button class="tab active" data-tab="consulta"><i class="fas fa-search"></i> Consulta Escolas</button>
         <button class="tab" data-tab="gerar"><i class="fas fa-chart-line"></i> Gerar Valor</button>
@@ -264,6 +259,7 @@
         <button class="tab" data-tab="historico"><i class="fas fa-history"></i> Histórico</button>
         <button class="tab" data-tab="links"><i class="fas fa-link"></i> Links Úteis</button>
     </div>
+
     <div class="main">
         <div id="consultaTab">
             <div class="card">
@@ -279,16 +275,18 @@
                     </div>
                 </div>
                 <div class="info-message" style="margin-top: 1rem;">
-                    <i class="fas fa-info-circle"></i>
+                    <i class="fas fa-info-circle"></i> 
                     <strong>Filtro automático:</strong> Digite na caixa acima para filtrar por NTE (exato), Município (exato), Código SEC, Código INEP ou Unidade Escolar (contém)<br>
                     <strong>Selecione as escolas:</strong> Marque os checkboxes e use "Enviar Selecionados" para levar à aba Gerar Valor
                 </div>
             </div>
+
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-table-list"></i> Lista de Escolas</h3><span class="badge" id="resultCount">0 registros</span></div>
                 <div id="resultsTable"><div class="empty-state"><i class="fas fa-cloud-download-alt" style="font-size: 3rem;"></i><p>Carregando lista completa de escolas...</p></div></div>
             </div>
         </div>
+
         <div id="gerarTab" style="display: none;">
             <div class="valor-cards-container">
                 <div class="valor-card faed-card">
@@ -304,6 +302,7 @@
                     <div class="card-value" id="cardTotalGeral">R$ 0,00</div>
                 </div>
             </div>
+
             <div class="action-buttons">
                 <button class="btn-primary" id="buscarFaedBtn"><i class="fas fa-chart-line"></i> Buscar FAED Manutenção</button>
                 <button class="btn-success" id="buscarAlimentacaoBtn"><i class="fas fa-utensils"></i> Buscar Repasse Alimentação</button>
@@ -317,6 +316,7 @@
                 <div id="gerarTabela"><div class="empty-state"><p>Selecione escolas na aba "Consulta Escolas"</p></div></div>
             </div>
         </div>
+
         <div id="relatorioTab" style="display: none;">
             <div class="report-actions">
                 <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
@@ -337,6 +337,7 @@
                 <div id="resumoConsolidado"><div class="empty-state"><p>Adicione dados ao resumo clicando em "Enviar para Resumo"</p></div></div>
             </div>
         </div>
+
         <div id="historicoTab" style="display: none;">
             <div class="card">
                 <div class="card-header">
@@ -346,6 +347,7 @@
                 <div id="historicoLista"><div class="empty-state"><p>Nenhuma nota salva no histórico</p></div></div>
             </div>
         </div>
+
         <div id="linksTab" style="display: none;">
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-link"></i> Links Úteis</h3></div>
@@ -373,6 +375,7 @@
             </div>
         </div>
     </div>
+
     <script>
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
@@ -1209,7 +1212,6 @@
             };
         });
         
-        // Inicialização
         carregarDadosPlanilha();
         carregarHistorico();
     </script>
