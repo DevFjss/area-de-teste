@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
+<script>
+    // Verifica se o usuário está logado
+    const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+    if (!usuarioLogado) {
+        window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+    }
+</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,7 +34,6 @@
         .form-group { flex: 2; min-width: 300px; }
         .form-group label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #5c7b9c; margin-bottom: 0.3rem; }
         .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; }
-        .form-group textarea { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; font-family: inherit; resize: vertical; }
         button { padding: 0.7rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; transition: all 0.2s; }
         .btn-primary { background: #2f80ed; color: white; }
         .btn-primary:hover { background: #1a68c7; transform: translateY(-1px); }
@@ -99,6 +104,7 @@
             font-family: 'Courier New', monospace;
         }
         
+        /* Estilos do Histórico */
         .historico-item {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -344,7 +350,7 @@
                     <h3><i class="fas fa-history"></i> Histórico de Notas Técnicas</h3>
                     <button class="btn-danger btn-small" id="limparHistoricoBtn"><i class="fas fa-trash"></i> Limpar Histórico</button>
                 </div>
-                <div id="historicoLista"><div class="empty-state"><p>Nenhuma nota salva no histórico</p></div></div>
+                <div id="historicoLista"><div class="empty-state"><p>📭 Nenhuma nota salva no histórico</p><p style="font-size: 0.8rem; margin-top: 0.5rem;">Clique em "Salvar Nota no Histórico" na aba Relatório para salvar suas notas.</p></div></div>
             </div>
         </div>
 
@@ -407,59 +413,64 @@
         let municipioExatoAtual = '';
         let nextId = 1;
         
-        // Histórico
+        // ==================== HISTÓRICO ====================
         let historicoNotas = [];
         
-        // Carregar histórico do localStorage
         function carregarHistorico() {
             const saved = localStorage.getItem('notasTecnicasHistorico');
             if (saved) {
                 try {
                     historicoNotas = JSON.parse(saved);
+                    console.log('Histórico carregado:', historicoNotas.length, 'notas');
                 } catch(e) {
+                    console.error('Erro ao carregar histórico:', e);
                     historicoNotas = [];
                 }
+            } else {
+                console.log('Nenhum histórico encontrado');
+                historicoNotas = [];
             }
             renderizarHistorico();
         }
         
-        // Salvar histórico no localStorage
         function salvarHistorico() {
             localStorage.setItem('notasTecnicasHistorico', JSON.stringify(historicoNotas));
+            console.log('Histórico salvo:', historicoNotas.length, 'notas');
             renderizarHistorico();
         }
         
-        // Salvar nota atual no histórico
         function salvarNotaHistorico() {
+            console.log('=== SALVANDO NOTA ===');
+            console.log('resumoDados length:', resumoDados.length);
+            
             if (resumoDados.length === 0) {
-                alert('Não há dados no resumo para salvar!');
+                alert('⚠️ Não há dados no resumo para salvar! Primeiro adicione dados ao resumo clicando em "Enviar para Resumo".');
                 return;
             }
             
-            const titulo = prompt('Digite um título para esta nota técnica:', `Nota Técnica - ${new Date().toLocaleString('pt-BR')}`);
+            const titulo = prompt('📝 Digite um título para esta nota técnica:', `Nota Técnica - ${new Date().toLocaleString('pt-BR')}`);
             if (!titulo) return;
             
-            const descricao = prompt('Digite uma descrição/observação (opcional):', '');
+            const descricao = prompt('📌 Digite uma descrição/observação (opcional):', '');
             
             const nota = {
                 id: Date.now(),
                 titulo: titulo,
-                descricao: descricao,
+                descricao: descricao || '',
                 data: new Date().toISOString(),
-                resumoDados: JSON.parse(JSON.stringify(resumoDados)), // Clone profundo
+                resumoDados: JSON.parse(JSON.stringify(resumoDados)),
                 tipoBusca: tipoBuscaAtual,
                 valorBusca: valorBuscaAtual,
                 totalEscolas: escolasSelecionadas.length
             };
             
-            historicoNotas.unshift(nota); // Adiciona no início
-            if (historicoNotas.length > 50) historicoNotas = historicoNotas.slice(0, 50); // Limita a 50 notas
+            historicoNotas.unshift(nota);
+            if (historicoNotas.length > 50) historicoNotas = historicoNotas.slice(0, 50);
             
             salvarHistorico();
-            alert(`Nota "${titulo}" salva com sucesso!`);
+            alert(`✅ Nota "${titulo}" salva com sucesso! Acesse a aba "Histórico" para visualizar.`);
         }
         
-        // Carregar uma nota do histórico
         function carregarNotaHistorico(notaId) {
             const nota = historicoNotas.find(n => n.id === notaId);
             if (!nota) {
@@ -473,7 +484,6 @@
                 valorBuscaAtual = nota.valorBusca || '';
                 renderResumoConsolidado();
                 
-                // Alternar para a aba de relatório
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelector('.tab[data-tab="relatorio"]').classList.add('active');
                 document.getElementById('consultaTab').style.display = 'none';
@@ -482,36 +492,32 @@
                 document.getElementById('historicoTab').style.display = 'none';
                 document.getElementById('linksTab').style.display = 'none';
                 
-                alert(`Nota "${nota.titulo}" carregada com sucesso!`);
+                alert(`✅ Nota "${nota.titulo}" carregada com sucesso!`);
             }
         }
         
-        // Excluir nota do histórico
         function excluirNotaHistorico(notaId) {
             if (confirm('Tem certeza que deseja excluir esta nota do histórico?')) {
                 historicoNotas = historicoNotas.filter(n => n.id !== notaId);
                 salvarHistorico();
-                alert('Nota excluída com sucesso!');
+                alert('🗑️ Nota excluída com sucesso!');
             }
         }
         
-        // Limpar todo histórico
         function limparHistorico() {
-            if (confirm('Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita!')) {
+            if (confirm('⚠️ Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita!')) {
                 historicoNotas = [];
                 salvarHistorico();
-                alert('Histórico limpo com sucesso!');
+                alert('🗑️ Histórico limpo com sucesso!');
             }
         }
         
-        // Exportar nota específica para Excel
         function exportarNotaExcel(nota) {
             if (!nota.resumoDados || nota.resumoDados.length === 0) {
                 alert('Esta nota não contém dados para exportar');
                 return;
             }
             
-            // Criar tabela temporária
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = gerarTabelaResumo(nota.resumoDados);
             const tabela = tempDiv.querySelector('table');
@@ -520,10 +526,10 @@
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, `Nota_${nota.titulo.substring(0, 30)}`);
                 XLSX.writeFile(wb, `${nota.titulo}.xlsx`);
+                alert(`📊 Excel da nota "${nota.titulo}" exportado!`);
             }
         }
         
-        // Gerar tabela HTML a partir dos dados do resumo
         function gerarTabelaResumo(dados) {
             if (!dados || dados.length === 0) return '<div>Sem dados</div>';
             
@@ -616,10 +622,13 @@
         
         function renderizarHistorico() {
             const container = document.getElementById('historicoLista');
-            if (!container) return;
+            if (!container) {
+                console.error('Container historicoLista não encontrado');
+                return;
+            }
             
             if (historicoNotas.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhuma nota salva no histórico</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>📭 Nenhuma nota salva no histórico</p><p style="font-size: 0.8rem; margin-top: 0.5rem;">Clique em "Salvar Nota no Histórico" na aba Relatório para salvar suas notas.</p></div>';
                 return;
             }
             
@@ -653,6 +662,16 @@
             div.textContent = text;
             return div.innerHTML;
         }
+        
+        // Função global para exportar nota do histórico
+        window.exportarNotaHistoricoExcel = (notaId) => {
+            const nota = historicoNotas.find(n => n.id === notaId);
+            if (nota) exportarNotaExcel(nota);
+        };
+        
+        window.carregarNotaHistorico = carregarNotaHistorico;
+        window.excluirNotaHistorico = excluirNotaHistorico;
+        // ==================== FIM HISTÓRICO ====================
         
         function formatarValorBR(valor) {
             if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
@@ -1009,7 +1028,7 @@
             };
             resumoDados.push(novoItem);
             renderResumoConsolidado();
-            alert(`Dados de ${identificador} adicionados ao resumo!`);
+            alert(`✅ Dados de ${identificador} adicionados ao resumo! Agora você pode salvar no histórico.`);
         }
         
         function excluirResumoSelecionados() {
@@ -1181,16 +1200,7 @@
         function exportGerarPDF() { exportarParaPDF(document.getElementById('gerarTabela'), 'detalhado_escolas'); }
         function exportGerarExcel() { exportarParaExcel(document.querySelector('#gerarTabela table'), 'detalhado_escolas'); }
         
-        // Função para exportar nota do histórico
-        window.exportarNotaHistoricoExcel = (notaId) => {
-            const nota = historicoNotas.find(n => n.id === notaId);
-            if (nota) exportarNotaExcel(nota);
-        };
-        
-        // Expor funções globais para o onclick
-        window.carregarNotaHistorico = carregarNotaHistorico;
-        window.excluirNotaHistorico = excluirNotaHistorico;
-        
+        // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
