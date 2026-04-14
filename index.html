@@ -17,6 +17,9 @@
         .logo-icon { background: #1e4d8c; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
         .logo h1 { font-size: 1.4rem; font-weight: 600; }
         .logo span { background: #2f80ed; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.7rem; margin-left: 8px; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .logout-btn { background: #dc2626; padding: 0.4rem 1rem; border-radius: 8px; color: white; text-decoration: none; font-size: 0.85rem; transition: background 0.2s; }
+        .logout-btn:hover { background: #b91c1c; }
         .tabs { background: #103450; padding: 0 2rem; display: flex; gap: 0.25rem; flex-wrap: wrap; }
         .tab { padding: 0.7rem 1.5rem; background: none; border: none; color: #b8d0e8; cursor: pointer; font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s; font-size: 0.9rem; }
         .tab:hover { background: #1f4b70; color: white; }
@@ -38,6 +41,8 @@
         .btn-warning { background: #f59e0b; color: white; }
         .btn-info { background: #3b82f6; color: white; }
         .btn-info:hover { background: #2563eb; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-purple:hover { background: #7c3aed; }
         .table-wrapper { overflow-x: auto; margin-top: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
         th, td { padding: 0.5rem 0.5rem; border: 1px solid #d1d5db; text-align: center; vertical-align: middle; }
@@ -98,7 +103,46 @@
             font-family: 'Courier New', monospace;
         }
         
-        /* Estilos do Histórico */
+        .listas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .lista-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .lista-item:hover {
+            background: #f1f5f9;
+            transform: translateX(3px);
+        }
+        .lista-info strong {
+            color: #0f172a;
+            font-size: 0.9rem;
+        }
+        .lista-info small {
+            color: #64748b;
+            font-size: 0.7rem;
+        }
+        .lista-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-small {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
         .historico-item {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -138,10 +182,6 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
-        }
-        .btn-small {
-            padding: 0.3rem 0.8rem;
-            font-size: 0.75rem;
         }
         
         .links-container {
@@ -217,7 +257,6 @@
             background: #b91c1c;
         }
         
-        /* Cores específicas da tabela */
         .th-manutencao {
             background: #9ca3af !important;
             color: #1f2937;
@@ -229,6 +268,18 @@
         .th-repasse {
             background: #edd5be !important;
             color: #5a3e1b;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
         }
         
         @media print {
@@ -249,7 +300,10 @@
             <div class="logo-icon"><i class="fas fa-school"></i></div>
             <h1>Nota Técnica <span>CDF</span></h1>
         </div>
-        <div class="status"><i class="fab fa-google"></i> Google Sheets Integrado</div>
+        <div class="user-info">
+            <span><i class="fas fa-user-circle"></i> <span id="userNameDisplay">Usuário</span></span>
+            <a href="#" class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
     </div>
 
     <div class="tabs">
@@ -261,6 +315,7 @@
     </div>
 
     <div class="main">
+        <!-- Aba Consulta -->
         <div id="consultaTab">
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-filter"></i> Filtrar Escolas</h3></div>
@@ -287,6 +342,7 @@
             </div>
         </div>
 
+        <!-- Aba Gerar Valor -->
         <div id="gerarTab" style="display: none;">
             <div class="valor-cards-container">
                 <div class="valor-card faed-card">
@@ -304,19 +360,34 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-primary" id="buscarFaedBtn"><i class="fas fa-chart-line"></i> Buscar FAED Manutenção</button>
-                <button class="btn-success" id="buscarAlimentacaoBtn"><i class="fas fa-utensils"></i> Buscar Repasse Alimentação</button>
+                <button class="btn-primary" id="buscarFaedBtn"><i class="fas fa-chart-line"></i> Buscar FAED</button>
+                <button class="btn-success" id="buscarAlimentacaoBtn"><i class="fas fa-utensils"></i> Buscar Alimentação</button>
+                <button class="btn-purple" id="salvarListaBtn"><i class="fas fa-save"></i> 💾 Salvar Lista</button>
                 <button class="btn-warning" id="enviarResumoBtn"><i class="fas fa-chart-bar"></i> Enviar para Resumo</button>
                 <button class="btn-secondary" id="exportGerarPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
                 <button class="btn-secondary" id="exportGerarExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
                 <button class="btn-danger" id="limparGerarBtn"><i class="fas fa-trash"></i> Limpar</button>
             </div>
-            <div class="card">
-                <div class="card-header"><h3><i class="fas fa-school"></i> Escolas Selecionadas</h3><span class="badge" id="gerarCount">0 escolas</span></div>
-                <div id="gerarTabela"><div class="empty-state"><p>Selecione escolas na aba "Consulta Escolas"</p></div></div>
+
+            <div class="two-columns">
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-school"></i> Escolas Selecionadas</h3><span class="badge" id="gerarCount">0 escolas</span></div>
+                    <div id="gerarTabela"><div class="empty-state"><p>Selecione escolas na aba "Consulta Escolas"</p></div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-list"></i> Minhas Listas Salvas</h3></div>
+                    <div id="listasSalvasContainer">
+                        <div class="empty-state" style="padding: 1rem;">
+                            <p>📭 Nenhuma lista salva</p>
+                            <p style="font-size: 0.75rem;">Clique em "💾 Salvar Lista" para salvar as escolas selecionadas</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Aba Relatório -->
         <div id="relatorioTab" style="display: none;">
             <div class="report-actions">
                 <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
@@ -338,6 +409,7 @@
             </div>
         </div>
 
+        <!-- Aba Histórico -->
         <div id="historicoTab" style="display: none;">
             <div class="card">
                 <div class="card-header">
@@ -348,6 +420,7 @@
             </div>
         </div>
 
+        <!-- Aba Links Úteis -->
         <div id="linksTab" style="display: none;">
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-link"></i> Links Úteis</h3></div>
@@ -377,6 +450,17 @@
     </div>
 
     <script>
+        // Mostrar nome do usuário
+        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
+        document.getElementById('userNameDisplay').textContent = usuarioNome;
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            sessionStorage.clear();
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        });
+        
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
         
@@ -407,6 +491,148 @@
         let municipioExatoAtual = '';
         let nextId = 1;
         
+        // ==================== SISTEMA DE LISTAS SALVAS ====================
+        let listasSalvas = [];
+        
+        function carregarListasSalvas() {
+            const saved = localStorage.getItem('listasEscolasSalvas');
+            if (saved) {
+                try {
+                    listasSalvas = JSON.parse(saved);
+                } catch(e) {
+                    listasSalvas = [];
+                }
+            } else {
+                listasSalvas = [];
+            }
+            renderizarListasSalvas();
+        }
+        
+        function salvarListasStorage() {
+            localStorage.setItem('listasEscolasSalvas', JSON.stringify(listasSalvas));
+            renderizarListasSalvas();
+        }
+        
+        function salvarListaEscolas() {
+            if (escolasSelecionadas.length === 0) {
+                alert('⚠️ Não há escolas selecionadas para salvar!');
+                return;
+            }
+            
+            const nomeLista = prompt('📝 Digite um nome para esta lista de escolas:', `Lista ${new Date().toLocaleString('pt-BR')}`);
+            if (!nomeLista) return;
+            
+            const existe = listasSalvas.some(lista => lista.nome === nomeLista);
+            if (existe) {
+                if (!confirm(`Já existe uma lista com o nome "${nomeLista}". Deseja substituí-la?`)) {
+                    return;
+                }
+                listasSalvas = listasSalvas.filter(lista => lista.nome !== nomeLista);
+            }
+            
+            const novaLista = {
+                id: Date.now(),
+                nome: nomeLista,
+                data: new Date().toISOString(),
+                escolas: escolasSelecionadas.map(escola => ({
+                    nte: escola.nte,
+                    municipio: escola.municipio,
+                    codigoSec: escola.codigoSec,
+                    codigoInep: escola.codigoInep,
+                    unidadeEscolar: escola.unidadeEscolar
+                }))
+            };
+            
+            listasSalvas.push(novaLista);
+            salvarListasStorage();
+            alert(`✅ Lista "${nomeLista}" salva com sucesso! ${escolasSelecionadas.length} escolas salvas.`);
+        }
+        
+        function carregarListaEscolas(listaId) {
+            const lista = listasSalvas.find(l => l.id === listaId);
+            if (!lista) {
+                alert('Lista não encontrada!');
+                return;
+            }
+            
+            if (confirm(`Deseja carregar a lista "${lista.nome}"? Isso substituirá as escolas atualmente selecionadas.`)) {
+                escolasSelecionadas = lista.escolas.map(escola => ({
+                    nte: escola.nte,
+                    municipio: escola.municipio,
+                    codigoSec: escola.codigoSec,
+                    codigoInep: escola.codigoInep,
+                    unidadeEscolar: escola.unidadeEscolar
+                }));
+                
+                renderGerarTabela();
+                atualizarCardsGerarValor();
+                
+                if (document.getElementById('consultaTab').style.display !== 'none') {
+                    atualizarCheckboxesConsulta();
+                }
+                
+                alert(`✅ Lista "${lista.nome}" carregada! ${escolasSelecionadas.length} escolas selecionadas.`);
+            }
+        }
+        
+        function excluirListaSalva(listaId) {
+            const lista = listasSalvas.find(l => l.id === listaId);
+            if (lista && confirm(`Tem certeza que deseja excluir a lista "${lista.nome}"?`)) {
+                listasSalvas = listasSalvas.filter(l => l.id !== listaId);
+                salvarListasStorage();
+                alert(`🗑️ Lista "${lista.nome}" excluída!`);
+            }
+        }
+        
+        function renderizarListasSalvas() {
+            const container = document.getElementById('listasSalvasContainer');
+            if (!container) return;
+            
+            if (listasSalvas.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 1rem;"><p>📭 Nenhuma lista salva</p><p style="font-size: 0.75rem;">Clique em "💾 Salvar Lista" para salvar as escolas selecionadas</p></div>';
+                return;
+            }
+            
+            let html = '<div class="listas-container">';
+            for (const lista of listasSalvas) {
+                const dataFormatada = new Date(lista.data).toLocaleString('pt-BR');
+                html += `
+                    <div class="lista-item">
+                        <div class="lista-info">
+                            <strong><i class="fas fa-list"></i> ${escapeHtml(lista.nome)}</strong><br>
+                            <small><i class="far fa-calendar-alt"></i> ${dataFormatada} | <i class="fas fa-school"></i> ${lista.escolas.length} escolas</small>
+                        </div>
+                        <div class="lista-actions">
+                            <button class="btn-info btn-small" onclick="carregarListaEscolas(${lista.id})"><i class="fas fa-download"></i> Carregar</button>
+                            <button class="btn-danger btn-small" onclick="excluirListaSalva(${lista.id})"><i class="fas fa-trash"></i> Excluir</button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function atualizarCheckboxesConsulta() {
+            const checkboxes = document.querySelectorAll('.school-checkbox');
+            checkboxes.forEach(cb => {
+                const codigo = cb.dataset.codigo;
+                const isSelected = escolasSelecionadas.some(s => s.codigoSec === codigo);
+                cb.checked = isSelected;
+                const row = cb.closest('tr');
+                if (row) {
+                    if (isSelected) row.classList.add('selected-row');
+                    else row.classList.remove('selected-row');
+                }
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         // ==================== HISTÓRICO ====================
         let historicoNotas = [];
         
@@ -415,13 +641,10 @@
             if (saved) {
                 try {
                     historicoNotas = JSON.parse(saved);
-                    console.log('Histórico carregado:', historicoNotas.length, 'notas');
                 } catch(e) {
-                    console.error('Erro ao carregar histórico:', e);
                     historicoNotas = [];
                 }
             } else {
-                console.log('Nenhum histórico encontrado');
                 historicoNotas = [];
             }
             renderizarHistorico();
@@ -429,16 +652,12 @@
         
         function salvarHistorico() {
             localStorage.setItem('notasTecnicasHistorico', JSON.stringify(historicoNotas));
-            console.log('Histórico salvo:', historicoNotas.length, 'notas');
             renderizarHistorico();
         }
         
         function salvarNotaHistorico() {
-            console.log('=== SALVANDO NOTA ===');
-            console.log('resumoDados length:', resumoDados.length);
-            
             if (resumoDados.length === 0) {
-                alert('⚠️ Não há dados no resumo para salvar! Primeiro adicione dados ao resumo clicando em "Enviar para Resumo".');
+                alert('⚠️ Não há dados no resumo para salvar!');
                 return;
             }
             
@@ -462,7 +681,7 @@
             if (historicoNotas.length > 50) historicoNotas = historicoNotas.slice(0, 50);
             
             salvarHistorico();
-            alert(`✅ Nota "${titulo}" salva com sucesso! Acesse a aba "Histórico" para visualizar.`);
+            alert(`✅ Nota "${titulo}" salva com sucesso!`);
         }
         
         function carregarNotaHistorico(notaId) {
@@ -472,10 +691,8 @@
                 return;
             }
             
-            if (confirm(`Deseja carregar a nota "${nota.titulo}"? Isso substituirá o resumo atual.`)) {
+            if (confirm(`Deseja carregar a nota "${nota.titulo}"?`)) {
                 resumoDados = JSON.parse(JSON.stringify(nota.resumoDados));
-                tipoBuscaAtual = nota.tipoBusca || '';
-                valorBuscaAtual = nota.valorBusca || '';
                 renderResumoConsolidado();
                 
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -486,143 +703,32 @@
                 document.getElementById('historicoTab').style.display = 'none';
                 document.getElementById('linksTab').style.display = 'none';
                 
-                alert(`✅ Nota "${nota.titulo}" carregada com sucesso!`);
+                alert(`✅ Nota "${nota.titulo}" carregada!`);
             }
         }
         
         function excluirNotaHistorico(notaId) {
-            if (confirm('Tem certeza que deseja excluir esta nota do histórico?')) {
+            if (confirm('Tem certeza que deseja excluir esta nota?')) {
                 historicoNotas = historicoNotas.filter(n => n.id !== notaId);
                 salvarHistorico();
-                alert('🗑️ Nota excluída com sucesso!');
+                alert('🗑️ Nota excluída!');
             }
         }
         
         function limparHistorico() {
-            if (confirm('⚠️ Tem certeza que deseja limpar TODO o histórico? Esta ação não pode ser desfeita!')) {
+            if (confirm('⚠️ Tem certeza que deseja limpar TODO o histórico?')) {
                 historicoNotas = [];
                 salvarHistorico();
-                alert('🗑️ Histórico limpo com sucesso!');
+                alert('🗑️ Histórico limpo!');
             }
-        }
-        
-        function exportarNotaExcel(nota) {
-            if (!nota.resumoDados || nota.resumoDados.length === 0) {
-                alert('Esta nota não contém dados para exportar');
-                return;
-            }
-            
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = gerarTabelaResumo(nota.resumoDados);
-            const tabela = tempDiv.querySelector('table');
-            if (tabela) {
-                const ws = XLSX.utils.table_to_sheet(tabela, { raw: true });
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, `Nota_${nota.titulo.substring(0, 30)}`);
-                XLSX.writeFile(wb, `${nota.titulo}.xlsx`);
-                alert(`📊 Excel da nota "${nota.titulo}" exportado!`);
-            }
-        }
-        
-        function gerarTabelaResumo(dados) {
-            if (!dados || dados.length === 0) return '<div>Sem dados</div>';
-            
-            let totalFAED = { 2023: 0, 2024: 0, 2025: 0, 2026: 0 };
-            let totalAlimentacaoFederal = { 2023: 0, 2024: 0, 2025: 0, 2026: 0 };
-            let totalAlimentacaoEstadual = { 2023: 0, 2024: 0, 2025: 0, 2026: 0 };
-            
-            for (const item of dados) {
-                for (let ano of [2023, 2024, 2025, 2026]) {
-                    totalFAED[ano] += item['faed' + ano] || 0;
-                    totalAlimentacaoFederal[ano] += (item.alimentacao?.[ano]?.federal || 0);
-                    totalAlimentacaoEstadual[ano] += (item.alimentacao?.[ano]?.estadual || 0);
-                }
-            }
-            
-            let totalGeralManutencao = totalFAED[2023] + totalFAED[2024] + totalFAED[2025] + totalFAED[2026];
-            let totalGeralAlimentacao = 0;
-            for (let ano of [2023, 2024, 2025, 2026]) {
-                totalGeralAlimentacao += totalAlimentacaoFederal[ano] + totalAlimentacaoEstadual[ano];
-            }
-            
-            let html = '<table style="min-width: 1300px;">';
-            html += '<thead>';
-            html += '<tr style="background: #374151; color: white;">';
-            html += '<th rowspan="3" class="th-repasse" style="background: #edd5be; color: #5a3e1b;">REPASSE ESCOLARES</th>';
-            html += '<th colspan="4" class="th-manutencao" style="background: #9ca3af;">MANUTENÇÃO</th>';
-            html += '<th colspan="8" class="th-alimentacao" style="background: #fff3cd;">ALIMENTAÇÃO</th>';
-            html += '</tr>';
-            html += '<tr style="background: #6b7280;">';
-            html += '<th rowspan="2" style="background: #9ca3af;">2023</th>';
-            html += '<th rowspan="2" style="background: #9ca3af;">2024</th>';
-            html += '<th rowspan="2" style="background: #9ca3af;">2025</th>';
-            html += '<th rowspan="2" style="background: #9ca3af;">2026</th>';
-            html += '<th colspan="2" style="background: #fff3cd;">2023</th>';
-            html += '<th colspan="2" style="background: #fff3cd;">2024</th>';
-            html += '<th colspan="2" style="background: #fff3cd;">2025</th>';
-            html += '<th colspan="2" style="background: #fff3cd;">2026</th>';
-            html += '</tr>';
-            html += '<tr style="background: #6b7280;">';
-            html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
-            html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
-            html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
-            html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
-            html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
-            html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
-            html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
-            html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
-            html += '</tr>';
-            html += '</thead><tbody>';
-            
-            for (const item of dados) {
-                html += '<tr>';
-                html += `<td style="text-align:left; font-weight:bold;">${item.identificador}`;
-                html += `<td class="valor-monetario">${formatarValorBR(item.faed2023 || 0)}`;
-                html += `<td class="valor-monetario">${formatarValorBR(item.faed2024 || 0)}`;
-                html += `<td class="valor-monetario">${formatarValorBR(item.faed2025 || 0)}`;
-                html += `<td class="valor-monetario">${formatarValorBR(item.faed2026 || 0)}`;
-                for (let ano of [2023, 2024, 2025, 2026]) {
-                    html += `<td class="valor-monetario">${formatarValorBR(item.alimentacao?.[ano]?.federal || 0)}`;
-                    html += `<td class="valor-monetario">${formatarValorBR(item.alimentacao?.[ano]?.estadual || 0)}`;
-                }
-                html += '</tr>';
-            }
-            
-            html += '<tr class="total-row">';
-            html += '<td style="text-align:left;"><strong>TOTAL</strong>';
-            html += `<td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2023])}</strong>`;
-            html += `<td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2024])}</strong>`;
-            html += `<td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2025])}</strong>`;
-            html += `<td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2026])}</strong>`;
-            for (let ano of [2023, 2024, 2025, 2026]) {
-                html += `<td class="valor-monetario"><strong>${formatarValorBR(totalAlimentacaoFederal[ano])}</strong>`;
-                html += `<td class="valor-monetario"><strong>${formatarValorBR(totalAlimentacaoEstadual[ano])}</strong>`;
-            }
-            html += '</tr>';
-            
-            html += '<tr class="total-geral">';
-            html += '<td style="text-align:left;"><strong>TOTAL GERAL MANUTENÇÃO</strong>';
-            html += `<td colspan="12" class="valor-monetario"><strong>${formatarValorBR(totalGeralManutencao)}</strong>`;
-            html += '</tr>';
-            
-            html += '<tr class="total-geral">';
-            html += '<td style="text-align:left;"><strong>TOTAL GERAL ALIMENTAÇÃO</strong>';
-            html += `<td colspan="12" class="valor-monetario"><strong>${formatarValorBR(totalGeralAlimentacao)}</strong>`;
-            html += '</tr>';
-            
-            html += '</tbody></table>';
-            return html;
         }
         
         function renderizarHistorico() {
             const container = document.getElementById('historicoLista');
-            if (!container) {
-                console.error('Container historicoLista não encontrado');
-                return;
-            }
+            if (!container) return;
             
             if (historicoNotas.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>📭 Nenhuma nota salva no histórico</p><p style="font-size: 0.8rem; margin-top: 0.5rem;">Clique em "Salvar Nota no Histórico" na aba Relatório para salvar suas notas.</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>📭 Nenhuma nota salva no histórico</p></div>';
                 return;
             }
             
@@ -636,13 +742,12 @@
                             <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
                         </div>
                         ${nota.descricao ? `<div class="historico-descricao"><i class="fas fa-comment"></i> ${escapeHtml(nota.descricao)}</div>` : ''}
-                        <div class="historico-descricao" style="font-size: 0.75rem; color: #64748b;">
-                            <i class="fas fa-chart-bar"></i> ${nota.resumoDados.length} item(ns) no resumo | 
+                        <div class="historico-descricao" style="font-size: 0.75rem;">
+                            <i class="fas fa-chart-bar"></i> ${nota.resumoDados.length} item(ns) | 
                             <i class="fas fa-school"></i> ${nota.totalEscolas || 0} escola(s)
                         </div>
                         <div class="historico-actions">
                             <button class="btn-info btn-small" onclick="carregarNotaHistorico(${nota.id})"><i class="fas fa-download"></i> Carregar</button>
-                            <button class="btn-success btn-small" onclick="exportarNotaHistoricoExcel(${nota.id})"><i class="fas fa-file-excel"></i> Exportar Excel</button>
                             <button class="btn-danger btn-small" onclick="excluirNotaHistorico(${nota.id})"><i class="fas fa-trash"></i> Excluir</button>
                         </div>
                     </div>
@@ -651,22 +756,13 @@
             container.innerHTML = html;
         }
         
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Função global para exportar nota do histórico
-        window.exportarNotaHistoricoExcel = (notaId) => {
-            const nota = historicoNotas.find(n => n.id === notaId);
-            if (nota) exportarNotaExcel(nota);
-        };
-        
+        // Tornar funções globais
+        window.carregarListaEscolas = carregarListaEscolas;
+        window.excluirListaSalva = excluirListaSalva;
         window.carregarNotaHistorico = carregarNotaHistorico;
         window.excluirNotaHistorico = excluirNotaHistorico;
-        // ==================== FIM HISTÓRICO ====================
         
+        // ==================== FUNÇÕES PRINCIPAIS ====================
         function formatarValorBR(valor) {
             if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
             return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -849,7 +945,6 @@
                 municipioExatoAtual = '';
             } else {
                 const termoNormalizado = normalizarTexto(termo);
-                
                 const nteExato = escolasData.filter(escola => escola.nte === termo);
                 if (nteExato.length > 0) {
                     resultados = nteExato;
@@ -1022,7 +1117,7 @@
             };
             resumoDados.push(novoItem);
             renderResumoConsolidado();
-            alert(`✅ Dados de ${identificador} adicionados ao resumo! Agora você pode salvar no histórico.`);
+            alert(`✅ Dados de ${identificador} adicionados ao resumo!`);
         }
         
         function excluirResumoSelecionados() {
@@ -1160,7 +1255,7 @@
             await carregarValoresFAED();
             renderGerarTabela();
             atualizarCardsGerarValor();
-            alert('FAED carregado!');
+            alert('✅ FAED carregado!');
         }
         
         async function buscarAlimentacao() {
@@ -1168,7 +1263,7 @@
             await carregarValoresAlimentacao();
             renderGerarTabela();
             atualizarCardsGerarValor();
-            alert('Alimentação carregada!');
+            alert('✅ Alimentação carregada!');
         }
         
         function limparGerar() { resetarGerarValor(); alert('Gerar Valor limpo!'); }
@@ -1199,6 +1294,7 @@
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
         document.getElementById('buscarAlimentacaoBtn').onclick = buscarAlimentacao;
+        document.getElementById('salvarListaBtn').onclick = salvarListaEscolas;
         document.getElementById('enviarResumoBtn').onclick = enviarParaResumo;
         document.getElementById('limparGerarBtn').onclick = limparGerar;
         document.getElementById('limparResumoBtn').onclick = limparResumo;
@@ -1226,7 +1322,9 @@
             };
         });
         
+        // Inicializar
         carregarDadosPlanilha();
+        carregarListasSalvas();
         carregarHistorico();
     </script>
 </body>
