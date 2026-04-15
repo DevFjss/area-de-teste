@@ -195,16 +195,6 @@
         max-height: 90%;
         border-radius: 8px;
     }
-    .link-sheets {
-        display: inline-block;
-        margin-top: 8px;
-        font-size: 0.7rem;
-        color: #4285f4;
-        text-decoration: none;
-    }
-    .link-sheets:hover {
-        text-decoration: underline;
-    }
     
     .links-container {
         display: flex;
@@ -453,8 +443,8 @@
 
     <script>
         // ==================== CONFIGURAÇÃO ====================
-        // COLOQUE A URL DO SEU GOOGLE APPS SCRIPT AQUI (DEPOIS DE REIMPLANTAR)
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNm36XSp1EFZ0vVWTZkwr6vAttcwlAsnSddQ2tmi2CRLuqkHMQZ_x7XEA-VhjotJJh2A/exec';
+
         
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
@@ -534,7 +524,6 @@
             setSyncStatus('syncing', 'Gerando print...');
             
             try {
-                // Clonar a tabela para capturar
                 const cloneTabela = tabela.cloneNode(true);
                 cloneTabela.style.width = '100%';
                 cloneTabela.style.backgroundColor = 'white';
@@ -597,12 +586,10 @@
                 
                 document.body.removeChild(offscreen);
                 
-                // Converter para base64
                 const imagemBase64 = canvas.toDataURL('image/png');
                 
                 setSyncStatus('syncing', 'Salvando na planilha...');
                 
-                // Salvar na planilha
                 const dados = {
                     action: 'salvar',
                     nome: titulo,
@@ -622,7 +609,7 @@
                 
                 if (resultado.success) {
                     setSyncStatus('success', 'Salvo!');
-                    alert(`✅ Print "${titulo}" salvo na planilha! Linha: ${resultado.linha}`);
+                    alert(`✅ Print "${titulo}" salvo na planilha!`);
                 } else {
                     throw new Error(resultado.error || 'Erro ao salvar');
                 }
@@ -777,6 +764,61 @@
             atualizarCardsGerarValor();
         }
         
+        // Função CORRIGIDA para parse do CSV
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(l => l.trim());
+            if (lines.length < 2) return [];
+            const dados = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Parse CSV respeitando aspas
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current);
+                
+                // Limpar aspas dos valores
+                const cleanValues = values.map(v => v.replace(/^"|"$/g, '').trim());
+                
+                // Mapear para o objeto escola baseado na estrutura da planilha
+                if (cleanValues.length >= 7) {
+                    dados.push({
+                        nte: cleanValues[1] || '',
+                        municipio: cleanValues[2] || '',
+                        codigoSec: cleanValues[3] || '',
+                        codigoInep: cleanValues[5] || '',
+                        unidadeEscolar: cleanValues[6] || ''
+                    });
+                } else if (cleanValues.length >= 5) {
+                    dados.push({
+                        nte: cleanValues[0] || '',
+                        municipio: cleanValues[1] || '',
+                        codigoSec: cleanValues[2] || '',
+                        codigoInep: cleanValues[3] || '',
+                        unidadeEscolar: cleanValues[4] || ''
+                    });
+                }
+            }
+            
+            console.log('✅ Escolas carregadas:', dados.length);
+            return dados;
+        }
+        
         async function carregarDadosPlanilha() {
             const container = document.getElementById('resultsTable');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando...</div>';
@@ -788,7 +830,8 @@
                 mostrarResultados(escolasData);
                 document.getElementById('resultCount').innerHTML = escolasData.length + ' registros';
             } catch (error) {
-                container.innerHTML = '<div class="empty-state"><p>Erro ao carregar.</p></div>';
+                console.error('Erro ao carregar:', error);
+                container.innerHTML = '<div class="empty-state"><p>Erro ao carregar dados.</p></div>';
             }
         }
         
@@ -872,25 +915,6 @@
                     valoresAlimentacao[ano].estadual = estadual;
                 }
             }
-        }
-        
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n').filter(l => l.trim());
-            if (lines.length < 2) return [];
-            const dados = [];
-            for (let i = 1; i < lines.length; i++) {
-                const values = parseCSVLine(lines[i]);
-                if (values.length >= 7) {
-                    dados.push({
-                        nte: (values[1] || '').replace(/^"|"$/g, '').trim(),
-                        municipio: (values[2] || '').replace(/^"|"$/g, '').trim(),
-                        codigoSec: (values[3] || '').replace(/^"|"$/g, '').trim(),
-                        codigoInep: (values[5] || '').replace(/^"|"$/g, '').trim(),
-                        unidadeEscolar: (values[6] || '').replace(/^"|"$/g, '').trim()
-                    });
-                }
-            }
-            return dados;
         }
         
         function parseCSVGeneric(csvText) {
@@ -977,7 +1001,7 @@
             let html = '<div class="table-wrapper">\n<table>\n<thead>\n<tr>';
             html += '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>';
             html += '<th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
-            html += '</table></thead><tbody>';
+            html += '</tr></thead><tbody>';
             for (const escola of resultados) {
                 const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
                 html += `<tr class="${isSelected ? 'selected-row' : ''}">`;
@@ -1170,7 +1194,7 @@
             html += '<th colspan="2" style="background: #fff3cd;">2024</th>';
             html += '<th colspan="2" style="background: #fff3cd;">2025</th>';
             html += '<th colspan="2" style="background: #fff3cd;">2026</th>';
-            html += '<tr>';
+            html += '</tr>';
             html += '<tr style="background: #6b7280;">';
             html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
             html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
