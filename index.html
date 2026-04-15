@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nota Técnica · CDF - Sistema Integrado</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f0f4f9; color: #1a2b4c; }
@@ -43,8 +42,6 @@
     .btn-info:hover { background: #2563eb; }
     .btn-purple { background: #8b5cf6; color: white; }
     .btn-purple:hover { background: #7c3aed; }
-    .btn-google { background: #4285f4; color: white; }
-    .btn-google:hover { background: #3367d6; }
     .table-wrapper { overflow-x: auto; margin-top: 1rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
     th, td { padding: 0.5rem 0.5rem; border: 1px solid #d1d5db; text-align: center; vertical-align: middle; }
@@ -149,13 +146,44 @@
         padding: 0.3rem 0.8rem;
         font-size: 0.75rem;
     }
-    .badge-cloud {
-        background: #4285f4;
+    .badge-print {
+        background: #8b5cf6;
         color: white;
         padding: 0.2rem 0.6rem;
         border-radius: 20px;
         font-size: 0.7rem;
         margin-left: 0.5rem;
+    }
+    .historico-imagem {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .historico-imagem:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .imagem-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .imagem-modal img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 8px;
     }
     
     .links-container {
@@ -244,20 +272,6 @@
         color: #5a3e1b;
     }
     
-    .sync-status {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 20px;
-        background: #10b981;
-        color: white;
-    }
-    .sync-status.syncing {
-        background: #f59e0b;
-    }
-    .sync-status.error {
-        background: #ef4444;
-    }
-    
     @media print {
         body { background: white; }
         .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container { display: none !important; }
@@ -277,7 +291,6 @@
             <h1>Nota Técnica <span>CDF</span></h1>
         </div>
         <div class="user-info">
-            <span><i class="fas fa-cloud"></i> <span id="syncStatus" class="sync-status">Sincronizado</span></span>
             <span><i class="fas fa-user-circle"></i> <span id="userNameDisplay">Usuário</span></span>
             <a href="#" class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
@@ -339,7 +352,6 @@
             <div class="action-buttons">
                 <button class="btn-primary" id="buscarFaedBtn"><i class="fas fa-chart-line"></i> Buscar FAED</button>
                 <button class="btn-success" id="buscarAlimentacaoBtn"><i class="fas fa-utensils"></i> Buscar Alimentação</button>
-                <button class="btn-purple" id="salvarListaBtn"><i class="fas fa-save"></i> 💾 Salvar Lista Local</button>
                 <button class="btn-warning" id="enviarResumoBtn"><i class="fas fa-chart-bar"></i> Enviar para Resumo</button>
                 <button class="btn-secondary" id="exportGerarPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
                 <button class="btn-secondary" id="exportGerarExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
@@ -357,8 +369,7 @@
             <div class="report-actions">
                 <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
                 <button class="btn-success" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
-                <button class="btn-google" id="salvarHistoricoCloudBtn"><i class="fas fa-cloud-upload-alt"></i> ☁️ Salvar na Nuvem</button>
-                <button class="btn-info" id="carregarHistoricoCloudBtn"><i class="fas fa-cloud-download-alt"></i> ☁️ Carregar da Nuvem</button>
+                <button class="btn-purple" id="salvarPrintBtn"><i class="fas fa-camera"></i> 📸 Salvar Print no Histórico</button>
                 <button class="btn-danger delete-selected-btn" id="deleteSelectedResumoBtn"><i class="fas fa-trash-alt"></i> Excluir Selecionados</button>
                 <button class="btn-danger" id="limparResumoBtn"><i class="fas fa-trash"></i> Limpar Tudo</button>
             </div>
@@ -380,21 +391,11 @@
         <div id="historicoTab" style="display: none;">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-cloud"></i> Histórico da Nuvem (Compartilhado)</h3>
-                    <button class="btn-danger btn-small" id="atualizarHistoricoBtn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                    <h3><i class="fas fa-images"></i> Prints Salvos (Histórico Local)</h3>
+                    <button class="btn-danger btn-small" id="limparHistoricoBtn"><i class="fas fa-trash"></i> Limpar Todos os Prints</button>
                 </div>
-                <div id="historicoCloudContainer">
-                    <div class="empty-state"><p>📭 Carregando histórico da nuvem...</p></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-list"></i> Listas Locais (Este PC)</h3>
-                    <button class="btn-purple btn-small" id="exportarListasBtn"><i class="fas fa-file-excel"></i> Exportar Listas</button>
-                </div>
-                <div id="listasSalvasContainer">
-                    <div class="empty-state"><p>📭 Nenhuma lista salva localmente</p></div>
+                <div id="historicoPrintsContainer">
+                    <div class="empty-state"><p>📭 Nenhum print salvo</p><p style="font-size: 0.8rem;">Clique em "📸 Salvar Print no Histórico" na aba Relatório para salvar a tabela como imagem.</p></div>
                 </div>
             </div>
         </div>
@@ -429,9 +430,16 @@
     </div>
 
     <script>
-        // ==================== CONFIGURAÇÃO ====================
-        // COLOQUE A URL DO SEU GOOGLE APPS SCRIPT AQUI:
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyG-FOqiHuf8fcoKnhGeMSow5cpr-Z93vaYEg-HepDctLeTeoAV-6x4SD_US-CP-huhuA/exec';
+        // Mostrar nome do usuário
+        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
+        document.getElementById('userNameDisplay').textContent = usuarioNome;
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            sessionStorage.clear();
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        });
         
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
@@ -463,216 +471,206 @@
         let valorBuscaAtual = '';
         let municipioExatoAtual = '';
         let nextId = 1;
-        let listasSalvas = [];
+        let historicoPrints = [];
         
-        // Mostrar nome do usuário
-        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
-        document.getElementById('userNameDisplay').textContent = usuarioNome;
+        // ==================== SALVAR PRINT DA TABELA NO HISTÓRICO LOCAL ====================
         
-        // Atualizar status de sincronização
-        function setSyncStatus(status, message) {
-            const statusEl = document.getElementById('syncStatus');
-            statusEl.textContent = message;
-            statusEl.className = `sync-status ${status}`;
-            setTimeout(() => {
-                if (statusEl.className === `sync-status ${status}`) {
-                    statusEl.className = 'sync-status';
-                    statusEl.textContent = 'Sincronizado';
+        function carregarPrintsSalvos() {
+            const saved = localStorage.getItem('printsTabelaHistorico');
+            if (saved) {
+                try {
+                    historicoPrints = JSON.parse(saved);
+                } catch(e) {
+                    historicoPrints = [];
                 }
-            }, 3000);
+            } else {
+                historicoPrints = [];
+            }
+            renderizarPrintsSalvos();
         }
         
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            sessionStorage.clear();
-            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
-        });
+        function salvarPrintsStorage() {
+            localStorage.setItem('printsTabelaHistorico', JSON.stringify(historicoPrints));
+            renderizarPrintsSalvos();
+        }
         
-        // ==================== FUNÇÕES DO GOOGLE SHEETS (NUVEM) ====================
-        
-        // Salvar resumo na nuvem
-        async function salvarResumoNaNuvem() {
-            if (resumoDados.length === 0) {
-                alert('⚠️ Não há dados no resumo para salvar!');
+        async function salvarPrintNoHistorico() {
+            const tabela = document.querySelector('#resumoConsolidado table');
+            
+            if (!tabela || resumoDados.length === 0) {
+                alert('⚠️ Não há tabela para salvar! Primeiro adicione dados ao resumo.');
                 return;
             }
             
-            const nome = prompt('📝 Digite um nome para esta nota técnica:', `Nota ${new Date().toLocaleString('pt-BR')}`);
-            if (!nome) return;
+            const titulo = prompt('📝 Digite um título para este print:', `Print ${new Date().toLocaleString('pt-BR')}`);
+            if (!titulo) return;
             
-            setSyncStatus('syncing', 'Salvando...');
+            const descricao = prompt('📌 Digite uma descrição (opcional):', '');
+            
+            const btn = document.getElementById('salvarPrintBtn');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Gerando print...';
+            btn.disabled = true;
             
             try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'salvar',
-                        nome: nome,
-                        resumoDados: resumoDados,
-                        usuario: usuarioNome
-                    })
+                const cloneTabela = tabela.cloneNode(true);
+                cloneTabela.style.width = '100%';
+                cloneTabela.style.backgroundColor = 'white';
+                cloneTabela.style.borderCollapse = 'collapse';
+                
+                const container = document.createElement('div');
+                container.style.backgroundColor = 'white';
+                container.style.padding = '20px';
+                container.style.borderRadius = '8px';
+                container.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                
+                const tituloElem = document.createElement('h3');
+                tituloElem.textContent = titulo;
+                tituloElem.style.marginBottom = '10px';
+                tituloElem.style.color = '#0a2647';
+                tituloElem.style.fontFamily = 'Segoe UI, sans-serif';
+                container.appendChild(tituloElem);
+                
+                const dataElem = document.createElement('p');
+                dataElem.textContent = `Data: ${new Date().toLocaleString('pt-BR')}`;
+                dataElem.style.marginBottom = '15px';
+                dataElem.style.color = '#666';
+                dataElem.style.fontSize = '12px';
+                container.appendChild(dataElem);
+                
+                container.appendChild(cloneTabela);
+                
+                const totalManutencao = document.querySelector('#totalManutencaoRow .valor-monetario');
+                const totalAlimentacao = document.querySelector('#totalAlimentacaoRow .valor-monetario');
+                
+                if (totalManutencao && totalAlimentacao) {
+                    const footer = document.createElement('p');
+                    footer.style.marginTop = '15px';
+                    footer.style.fontWeight = 'bold';
+                    footer.style.fontSize = '12px';
+                    footer.innerHTML = `Total Geral Manutenção: ${totalManutencao.innerHTML} | Total Geral Alimentação: ${totalAlimentacao.innerHTML}`;
+                    container.appendChild(footer);
+                }
+                
+                const usuarioElem = document.createElement('p');
+                usuarioElem.style.marginTop = '10px';
+                usuarioElem.style.fontSize = '10px';
+                usuarioElem.style.color = '#999';
+                usuarioElem.textContent = `Gerado por: ${usuarioNome} | Sistema Nota Técnica CDF`;
+                container.appendChild(usuarioElem);
+                
+                const offscreen = document.createElement('div');
+                offscreen.style.position = 'absolute';
+                offscreen.style.left = '-9999px';
+                offscreen.style.top = '-9999px';
+                offscreen.appendChild(container);
+                document.body.appendChild(offscreen);
+                
+                const canvas = await html2canvas(offscreen, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true
                 });
                 
-                setSyncStatus('success', 'Salvo!');
-                alert(`✅ Nota "${nome}" salva na nuvem com sucesso! Todos os usuários podem ver.`);
+                document.body.removeChild(offscreen);
                 
-                // Atualizar lista se estiver na aba histórico
-                if (document.getElementById('historicoTab').style.display !== 'none') {
-                    carregarHistoricoDaNuvem();
+                const imagemBase64 = canvas.toDataURL('image/png');
+                
+                const novoPrint = {
+                    id: Date.now(),
+                    titulo: titulo,
+                    descricao: descricao || '',
+                    data: new Date().toISOString(),
+                    imagem: imagemBase64,
+                    usuario: usuarioNome
+                };
+                
+                historicoPrints.unshift(novoPrint);
+                
+                if (historicoPrints.length > 50) {
+                    historicoPrints = historicoPrints.slice(0, 50);
                 }
+                
+                salvarPrintsStorage();
+                
+                alert(`✅ Print "${titulo}" salvo no histórico local!`);
+                
             } catch (error) {
-                console.error('Erro ao salvar:', error);
-                setSyncStatus('error', 'Erro');
-                alert('❌ Erro ao salvar na nuvem. Verifique sua conexão.');
+                console.error('Erro ao gerar print:', error);
+                alert('❌ Erro ao gerar print: ' + error.message);
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
             }
         }
         
-        // Carregar histórico da nuvem
-        async function carregarHistoricoDaNuvem() {
-            const container = document.getElementById('historicoCloudContainer');
-            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando histórico da nuvem...</div>';
+        function renderizarPrintsSalvos() {
+            const container = document.getElementById('historicoPrintsContainer');
+            if (!container) return;
             
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const text = await response.text();
-                
-                // Parse manual (pode vir como texto)
-                let dados = [];
-                try {
-                    dados = JSON.parse(text);
-                } catch(e) {
-                    console.error('Erro ao parsear:', e);
-                    dados = [];
-                }
-                
-                if (!dados || dados.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><p>📭 Nenhuma nota salva na nuvem</p><p style="font-size: 0.8rem;">Clique em "☁️ Salvar na Nuvem" na aba Relatório para salvar suas notas.</p></div>';
-                    return;
-                }
-                
-                let html = '';
-                for (const item of dados) {
-                    const dataFormatada = new Date(item.data).toLocaleString('pt-BR');
-                    let preview = '';
-                    try {
-                        const conteudo = JSON.parse(item.conteudo);
-                        preview = `${conteudo.length} item(ns) no resumo`;
-                    } catch(e) {
-                        preview = 'Dados disponíveis';
-                    }
-                    
-                    html += `
-                        <div class="historico-item">
-                            <div class="historico-header">
-                                <div class="historico-titulo">
-                                    <i class="fas fa-cloud-upload-alt" style="color: #4285f4;"></i> ${escapeHtml(item.nome)}
-                                    <span class="badge-cloud">Nuvem</span>
-                                </div>
-                                <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
+            if (historicoPrints.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>📭 Nenhum print salvo</p><p style="font-size: 0.8rem;">Clique em "📸 Salvar Print no Histórico" na aba Relatório para salvar a tabela como imagem.</p></div>';
+                return;
+            }
+            
+            let html = '';
+            for (const print of historicoPrints) {
+                const dataFormatada = new Date(print.data).toLocaleString('pt-BR');
+                html += `
+                    <div class="historico-item">
+                        <div class="historico-header">
+                            <div class="historico-titulo">
+                                <i class="fas fa-camera" style="color: #8b5cf6;"></i> ${escapeHtml(print.titulo)}
+                                <span class="badge-print">Print</span>
                             </div>
-                            <div class="historico-descricao">
-                                <i class="fas fa-user"></i> ${escapeHtml(item.usuario)} | 
-                                <i class="fas fa-chart-bar"></i> ${preview}
-                            </div>
-                            <div class="historico-actions">
-                                <button class="btn-info btn-small" onclick="carregarNotaDaNuvem('${item.id}')">
-                                    <i class="fas fa-download"></i> Carregar
-                                </button>
-                                <button class="btn-danger btn-small" onclick="excluirNotaDaNuvem('${item.id}', '${escapeHtml(item.nome)}')">
-                                    <i class="fas fa-trash"></i> Excluir
-                                </button>
-                            </div>
+                            <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
                         </div>
-                    `;
-                }
-                container.innerHTML = html;
-                setSyncStatus('success', 'Carregado');
-                
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-                container.innerHTML = '<div class="empty-state"><p>❌ Erro ao carregar histórico da nuvem</p></div>';
-                setSyncStatus('error', 'Erro');
+                        ${print.descricao ? `<div class="historico-descricao"><i class="fas fa-comment"></i> ${escapeHtml(print.descricao)}</div>` : ''}
+                        <div class="historico-descricao">
+                            <i class="fas fa-user"></i> ${escapeHtml(print.usuario)}
+                        </div>
+                        <img src="${print.imagem}" class="historico-imagem" onclick="verImagemGrande('${print.id}')" alt="Print da tabela">
+                        <div class="historico-actions" style="margin-top: 10px;">
+                            <button class="btn-danger btn-small" onclick="excluirPrint(${print.id})"><i class="fas fa-trash"></i> Excluir Print</button>
+                        </div>
+                    </div>
+                `;
             }
+            container.innerHTML = html;
         }
         
-        // Carregar uma nota específica da nuvem
-        async function carregarNotaDaNuvem(notaId) {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const text = await response.text();
-                let dados = [];
-                try {
-                    dados = JSON.parse(text);
-                } catch(e) {
-                    dados = [];
-                }
-                
-                const nota = dados.find(n => n.id === notaId);
-                
-                if (!nota) {
-                    alert('Nota não encontrada!');
-                    return;
-                }
-                
-                if (confirm(`Deseja carregar a nota "${nota.nome}"? Isso substituirá o resumo atual.`)) {
-                    const conteudo = JSON.parse(nota.conteudo);
-                    resumoDados = conteudo;
-                    renderResumoConsolidado();
-                    
-                    // Ir para aba Relatório
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    document.querySelector('.tab[data-tab="relatorio"]').classList.add('active');
-                    document.getElementById('consultaTab').style.display = 'none';
-                    document.getElementById('gerarTab').style.display = 'none';
-                    document.getElementById('relatorioTab').style.display = 'block';
-                    document.getElementById('historicoTab').style.display = 'none';
-                    document.getElementById('linksTab').style.display = 'none';
-                    
-                    alert(`✅ Nota "${nota.nome}" carregada com sucesso!`);
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('❌ Erro ao carregar a nota');
-            }
-        }
-        
-        // Excluir nota da nuvem
-        async function excluirNotaDaNuvem(notaId, nomeNota) {
-            if (!confirm(`Tem certeza que deseja excluir "${nomeNota}" da nuvem? Esta ação é irreversível.`)) {
-                return;
-            }
+        function verImagemGrande(printId) {
+            const print = historicoPrints.find(p => p.id === printId);
+            if (!print) return;
             
-            setSyncStatus('syncing', 'Excluindo...');
+            const modal = document.createElement('div');
+            modal.className = 'imagem-modal';
+            modal.onclick = () => modal.remove();
             
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'excluir',
-                        id: notaId
-                    })
-                });
-                
-                setSyncStatus('success', 'Excluído');
-                alert(`🗑️ Nota "${nomeNota}" excluída da nuvem!`);
-                carregarHistoricoDaNuvem();
-            } catch (error) {
-                console.error('Erro:', error);
-                setSyncStatus('error', 'Erro');
-                alert('❌ Erro ao excluir. Tente novamente.');
+            const img = document.createElement('img');
+            img.src = print.imagem;
+            img.style.maxWidth = '90%';
+            img.style.maxHeight = '90%';
+            
+            modal.appendChild(img);
+            document.body.appendChild(modal);
+        }
+        
+        function excluirPrint(printId) {
+            if (confirm('Tem certeza que deseja excluir este print?')) {
+                historicoPrints = historicoPrints.filter(p => p.id !== printId);
+                salvarPrintsStorage();
+                alert('🗑️ Print excluído!');
             }
         }
         
-        // ==================== FUNÇÕES LOCAIS ====================
-        
-        function formatarValorBR(valor) {
-            if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
-            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        function limparTodosPrints() {
+            if (confirm('⚠️ Tem certeza que deseja limpar TODOS os prints do histórico?')) {
+                historicoPrints = [];
+                salvarPrintsStorage();
+                alert('🗑️ Todos os prints foram excluídos!');
+            }
         }
         
         function escapeHtml(text) {
@@ -681,183 +679,13 @@
             return div.innerHTML;
         }
         
-        // Listas locais
-        function carregarListasSalvas() {
-            const saved = localStorage.getItem('listasEscolasSalvas');
-            if (saved) {
-                try {
-                    listasSalvas = JSON.parse(saved);
-                } catch(e) {
-                    listasSalvas = [];
-                }
-            } else {
-                listasSalvas = [];
-            }
-            renderizarListasSalvas();
+        // ==================== FUNÇÕES PRINCIPAIS DO SISTEMA ====================
+        
+        function formatarValorBR(valor) {
+            if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
+            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         
-        function salvarListasStorage() {
-            localStorage.setItem('listasEscolasSalvas', JSON.stringify(listasSalvas));
-            renderizarListasSalvas();
-        }
-        
-        function salvarListaEscolas() {
-            if (escolasSelecionadas.length === 0) {
-                alert('⚠️ Não há escolas selecionadas para salvar!');
-                return;
-            }
-            
-            const nomeLista = prompt('📝 Digite um nome para esta lista de escolas:', `Lista ${new Date().toLocaleString('pt-BR')}`);
-            if (!nomeLista) return;
-            
-            const existe = listasSalvas.some(lista => lista.nome === nomeLista);
-            if (existe) {
-                if (!confirm(`Já existe uma lista com o nome "${nomeLista}". Deseja substituí-la?`)) {
-                    return;
-                }
-                listasSalvas = listasSalvas.filter(lista => lista.nome !== nomeLista);
-            }
-            
-            const novaLista = {
-                id: Date.now(),
-                nome: nomeLista,
-                tipo: 'lista',
-                data: new Date().toISOString(),
-                escolas: escolasSelecionadas.map(escola => ({
-                    nte: escola.nte,
-                    municipio: escola.municipio,
-                    codigoSec: escola.codigoSec,
-                    codigoInep: escola.codigoInep,
-                    unidadeEscolar: escola.unidadeEscolar
-                }))
-            };
-            
-            listasSalvas.push(novaLista);
-            salvarListasStorage();
-            alert(`✅ Lista "${nomeLista}" salva localmente! ${escolasSelecionadas.length} escolas salvas.`);
-        }
-        
-        function carregarListaEscolas(listaId) {
-            const lista = listasSalvas.find(l => l.id === listaId);
-            if (!lista) {
-                alert('Lista não encontrada!');
-                return;
-            }
-            
-            if (confirm(`Deseja carregar a lista "${lista.nome}"? Isso substituirá as escolas atualmente selecionadas.`)) {
-                escolasSelecionadas = lista.escolas.map(escola => ({
-                    nte: escola.nte,
-                    municipio: escola.municipio,
-                    codigoSec: escola.codigoSec,
-                    codigoInep: escola.codigoInep,
-                    unidadeEscolar: escola.unidadeEscolar
-                }));
-                
-                renderGerarTabela();
-                atualizarCardsGerarValor();
-                
-                if (document.getElementById('consultaTab').style.display !== 'none') {
-                    atualizarCheckboxesConsulta();
-                }
-                
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('.tab[data-tab="gerar"]').classList.add('active');
-                document.getElementById('consultaTab').style.display = 'none';
-                document.getElementById('gerarTab').style.display = 'block';
-                document.getElementById('relatorioTab').style.display = 'none';
-                document.getElementById('historicoTab').style.display = 'none';
-                document.getElementById('linksTab').style.display = 'none';
-                
-                alert(`✅ Lista "${lista.nome}" carregada! ${escolasSelecionadas.length} escolas selecionadas.`);
-            }
-        }
-        
-        function excluirListaSalva(listaId) {
-            const lista = listasSalvas.find(l => l.id === listaId);
-            if (lista && confirm(`Tem certeza que deseja excluir a lista "${lista.nome}"?`)) {
-                listasSalvas = listasSalvas.filter(l => l.id !== listaId);
-                salvarListasStorage();
-                alert(`🗑️ Lista "${lista.nome}" excluída!`);
-            }
-        }
-        
-        function exportarListasExcel() {
-            if (listasSalvas.length === 0) {
-                alert('Nenhuma lista para exportar!');
-                return;
-            }
-            
-            const dadosExportar = [];
-            for (const lista of listasSalvas) {
-                for (const escola of lista.escolas) {
-                    dadosExportar.push({
-                        'Lista': lista.nome,
-                        'Data': new Date(lista.data).toLocaleString('pt-BR'),
-                        'NTE': escola.nte,
-                        'Município': escola.municipio,
-                        'Código SEC': escola.codigoSec,
-                        'Código INEP': escola.codigoInep,
-                        'Unidade Escolar': escola.unidadeEscolar
-                    });
-                }
-            }
-            
-            const ws = XLSX.utils.json_to_sheet(dadosExportar);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Listas de Escolas');
-            XLSX.writeFile(wb, `listas_escolas_${new Date().toISOString().slice(0,19)}.xlsx`);
-            alert('📊 Listas exportadas com sucesso!');
-        }
-        
-        function renderizarListasSalvas() {
-            const container = document.getElementById('listasSalvasContainer');
-            if (!container) return;
-            
-            if (listasSalvas.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>📭 Nenhuma lista salva localmente</p><p style="font-size: 0.8rem;">Clique em "💾 Salvar Lista Local" na aba Gerar Valor para salvar suas listas.</p></div>';
-                return;
-            }
-            
-            let html = '';
-            for (const lista of listasSalvas) {
-                const dataFormatada = new Date(lista.data).toLocaleString('pt-BR');
-                html += `
-                    <div class="historico-item">
-                        <div class="historico-header">
-                            <div class="historico-titulo">
-                                <i class="fas fa-list" style="color: #8b5cf6;"></i> ${escapeHtml(lista.nome)}
-                                <span class="badge-lista" style="background:#8b5cf6;color:white;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;margin-left:0.5rem;">Local</span>
-                            </div>
-                            <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
-                        </div>
-                        <div class="historico-descricao">
-                            <i class="fas fa-school"></i> ${lista.escolas.length} escolas salvas
-                        </div>
-                        <div class="historico-actions">
-                            <button class="btn-info btn-small" onclick="carregarListaEscolas(${lista.id})"><i class="fas fa-download"></i> Carregar</button>
-                            <button class="btn-danger btn-small" onclick="excluirListaSalva(${lista.id})"><i class="fas fa-trash"></i> Excluir</button>
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-        
-        function atualizarCheckboxesConsulta() {
-            const checkboxes = document.querySelectorAll('.school-checkbox');
-            checkboxes.forEach(cb => {
-                const codigo = cb.dataset.codigo;
-                const isSelected = escolasSelecionadas.some(s => s.codigoSec === codigo);
-                cb.checked = isSelected;
-                const row = cb.closest('tr');
-                if (row) {
-                    if (isSelected) row.classList.add('selected-row');
-                    else row.classList.remove('selected-row');
-                }
-            });
-        }
-        
-        // Funções principais
         function atualizarCardsGerarValor() {
             let totalFaed = 0, totalAlimentacao = 0;
             for (const escola of escolasSelecionadas) {
@@ -1401,17 +1229,14 @@
         function exportGerarExcel() { exportarParaExcel(document.querySelector('#gerarTabela table'), 'detalhado_escolas'); }
         
         // Tornar funções globais
-        window.carregarListaEscolas = carregarListaEscolas;
-        window.excluirListaSalva = excluirListaSalva;
-        window.carregarNotaDaNuvem = carregarNotaDaNuvem;
-        window.excluirNotaDaNuvem = excluirNotaDaNuvem;
+        window.verImagemGrande = verImagemGrande;
+        window.excluirPrint = excluirPrint;
         
         // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
         document.getElementById('buscarAlimentacaoBtn').onclick = buscarAlimentacao;
-        document.getElementById('salvarListaBtn').onclick = salvarListaEscolas;
         document.getElementById('enviarResumoBtn').onclick = enviarParaResumo;
         document.getElementById('limparGerarBtn').onclick = limparGerar;
         document.getElementById('limparResumoBtn').onclick = limparResumo;
@@ -1420,10 +1245,8 @@
         document.getElementById('exportExcelBtn').onclick = exportResumoExcel;
         document.getElementById('exportGerarPDFBtn').onclick = exportGerarPDF;
         document.getElementById('exportGerarExcelBtn').onclick = exportGerarExcel;
-        document.getElementById('salvarHistoricoCloudBtn').onclick = salvarResumoNaNuvem;
-        document.getElementById('carregarHistoricoCloudBtn').onclick = carregarHistoricoDaNuvem;
-        document.getElementById('atualizarHistoricoBtn').onclick = carregarHistoricoDaNuvem;
-        document.getElementById('exportarListasBtn').onclick = exportarListasExcel;
+        document.getElementById('salvarPrintBtn').onclick = salvarPrintNoHistorico;
+        document.getElementById('limparHistoricoBtn').onclick = limparTodosPrints;
         document.getElementById('searchValue').addEventListener('input', autoFiltro);
         
         document.querySelectorAll('.tab').forEach(tab => {
@@ -1437,16 +1260,13 @@
                 document.getElementById('linksTab').style.display = 'none';
                 document.getElementById(tab.dataset.tab + 'Tab').style.display = 'block';
                 if (tab.dataset.tab === 'relatorio') renderResumoConsolidado();
-                if (tab.dataset.tab === 'historico') {
-                    carregarHistoricoDaNuvem();
-                    renderizarListasSalvas();
-                }
+                if (tab.dataset.tab === 'historico') carregarPrintsSalvos();
             };
         });
         
         // Inicializar
         carregarDadosPlanilha();
-        carregarListasSalvas();
+        carregarPrintsSalvos();
     </script>
 </body>
 </html>
