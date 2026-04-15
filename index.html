@@ -42,6 +42,8 @@
     .btn-info:hover { background: #2563eb; }
     .btn-purple { background: #8b5cf6; color: white; }
     .btn-purple:hover { background: #7c3aed; }
+    .btn-google { background: #4285f4; color: white; }
+    .btn-google:hover { background: #3367d6; }
     .table-wrapper { overflow-x: auto; margin-top: 1rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
     th, td { padding: 0.5rem 0.5rem; border: 1px solid #d1d5db; text-align: center; vertical-align: middle; }
@@ -154,6 +156,14 @@
         font-size: 0.7rem;
         margin-left: 0.5rem;
     }
+    .badge-sheets {
+        background: #4285f4;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
     .historico-imagem {
         max-width: 100%;
         max-height: 200px;
@@ -184,6 +194,16 @@
         max-width: 90%;
         max-height: 90%;
         border-radius: 8px;
+    }
+    .link-sheets {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 0.7rem;
+        color: #4285f4;
+        text-decoration: none;
+    }
+    .link-sheets:hover {
+        text-decoration: underline;
     }
     
     .links-container {
@@ -291,6 +311,7 @@
             <h1>Nota Técnica <span>CDF</span></h1>
         </div>
         <div class="user-info">
+            <span><i class="fas fa-cloud"></i> <span id="syncStatus" class="sync-status">Sincronizado</span></span>
             <span><i class="fas fa-user-circle"></i> <span id="userNameDisplay">Usuário</span></span>
             <a href="#" class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
@@ -369,7 +390,8 @@
             <div class="report-actions">
                 <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
                 <button class="btn-success" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
-                <button class="btn-purple" id="salvarPrintBtn"><i class="fas fa-camera"></i> 📸 Salvar Print no Histórico</button>
+                <button class="btn-google" id="salvarPrintBtn"><i class="fas fa-camera"></i> 📸 Salvar Print na Planilha</button>
+                <button class="btn-info" id="carregarPlanilhaBtn"><i class="fas fa-cloud-download-alt"></i> 📥 Carregar da Planilha</button>
                 <button class="btn-danger delete-selected-btn" id="deleteSelectedResumoBtn"><i class="fas fa-trash-alt"></i> Excluir Selecionados</button>
                 <button class="btn-danger" id="limparResumoBtn"><i class="fas fa-trash"></i> Limpar Tudo</button>
             </div>
@@ -391,11 +413,11 @@
         <div id="historicoTab" style="display: none;">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-images"></i> Prints Salvos (Histórico Local)</h3>
-                    <button class="btn-danger btn-small" id="limparHistoricoBtn"><i class="fas fa-trash"></i> Limpar Todos os Prints</button>
+                    <h3><i class="fas fa-cloud"></i> Prints Salvos na Planilha</h3>
+                    <button class="btn-danger btn-small" id="atualizarHistoricoBtn"><i class="fas fa-sync-alt"></i> Atualizar</button>
                 </div>
                 <div id="historicoPrintsContainer">
-                    <div class="empty-state"><p>📭 Nenhum print salvo</p><p style="font-size: 0.8rem;">Clique em "📸 Salvar Print no Histórico" na aba Relatório para salvar a tabela como imagem.</p></div>
+                    <div class="empty-state"><p>📭 Carregando prints da planilha...</p></div>
                 </div>
             </div>
         </div>
@@ -430,16 +452,9 @@
     </div>
 
     <script>
-        // Mostrar nome do usuário
-        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
-        document.getElementById('userNameDisplay').textContent = usuarioNome;
-        
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            sessionStorage.clear();
-            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
-        });
+        // ==================== CONFIGURAÇÃO ====================
+        // COLOQUE A URL DO SEU GOOGLE APPS SCRIPT AQUI (DEPOIS DE REIMPLANTAR)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/SUA_NOVA_URL_AQUI/exec';
         
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
@@ -473,28 +488,33 @@
         let nextId = 1;
         let historicoPrints = [];
         
-        // ==================== SALVAR PRINT DA TABELA NO HISTÓRICO LOCAL ====================
+        // Mostrar nome do usuário
+        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
+        document.getElementById('userNameDisplay').textContent = usuarioNome;
         
-        function carregarPrintsSalvos() {
-            const saved = localStorage.getItem('printsTabelaHistorico');
-            if (saved) {
-                try {
-                    historicoPrints = JSON.parse(saved);
-                } catch(e) {
-                    historicoPrints = [];
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            sessionStorage.clear();
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        });
+        
+        // ==================== FUNÇÕES DO GOOGLE SHEETS ====================
+        
+        function setSyncStatus(status, message) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.textContent = message;
+            statusEl.className = `sync-status ${status}`;
+            setTimeout(() => {
+                if (statusEl.className === `sync-status ${status}`) {
+                    statusEl.className = 'sync-status';
+                    statusEl.textContent = 'Sincronizado';
                 }
-            } else {
-                historicoPrints = [];
-            }
-            renderizarPrintsSalvos();
+            }, 3000);
         }
         
-        function salvarPrintsStorage() {
-            localStorage.setItem('printsTabelaHistorico', JSON.stringify(historicoPrints));
-            renderizarPrintsSalvos();
-        }
-        
-        async function salvarPrintNoHistorico() {
+        // Salvar print na planilha
+        async function salvarPrintNaPlanilha() {
             const tabela = document.querySelector('#resumoConsolidado table');
             
             if (!tabela || resumoDados.length === 0) {
@@ -511,8 +531,10 @@
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Gerando print...';
             btn.disabled = true;
+            setSyncStatus('syncing', 'Gerando print...');
             
             try {
+                // Clonar a tabela para capturar
                 const cloneTabela = tabela.cloneNode(true);
                 cloneTabela.style.width = '100%';
                 cloneTabela.style.backgroundColor = 'white';
@@ -575,102 +597,149 @@
                 
                 document.body.removeChild(offscreen);
                 
+                // Converter para base64
                 const imagemBase64 = canvas.toDataURL('image/png');
                 
-                const novoPrint = {
-                    id: Date.now(),
-                    titulo: titulo,
-                    descricao: descricao || '',
-                    data: new Date().toISOString(),
-                    imagem: imagemBase64,
-                    usuario: usuarioNome
+                setSyncStatus('syncing', 'Salvando na planilha...');
+                
+                // Salvar na planilha
+                const dados = {
+                    action: 'salvar',
+                    nome: titulo,
+                    imagemUrl: imagemBase64,
+                    usuario: usuarioNome,
+                    totalItens: resumoDados.length,
+                    descricao: descricao || ''
                 };
                 
-                historicoPrints.unshift(novoPrint);
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
                 
-                if (historicoPrints.length > 50) {
-                    historicoPrints = historicoPrints.slice(0, 50);
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    setSyncStatus('success', 'Salvo!');
+                    alert(`✅ Print "${titulo}" salvo na planilha! Linha: ${resultado.linha}`);
+                } else {
+                    throw new Error(resultado.error || 'Erro ao salvar');
                 }
                 
-                salvarPrintsStorage();
-                
-                alert(`✅ Print "${titulo}" salvo no histórico local!`);
-                
             } catch (error) {
-                console.error('Erro ao gerar print:', error);
-                alert('❌ Erro ao gerar print: ' + error.message);
+                console.error('Erro:', error);
+                setSyncStatus('error', 'Erro');
+                alert('❌ Erro ao salvar: ' + error.message);
             } finally {
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
             }
         }
         
-        function renderizarPrintsSalvos() {
+        // Carregar prints da planilha
+        async function carregarPrintsDaPlanilha() {
             const container = document.getElementById('historicoPrintsContainer');
-            if (!container) return;
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando prints da planilha...</div>';
+            setSyncStatus('syncing', 'Carregando...');
             
-            if (historicoPrints.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>📭 Nenhum print salvo</p><p style="font-size: 0.8rem;">Clique em "📸 Salvar Print no Histórico" na aba Relatório para salvar a tabela como imagem.</p></div>';
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const dados = await response.json();
+                
+                if (!dados || dados.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>📭 Nenhum print salvo na planilha</p><p style="font-size: 0.8rem;">Clique em "📸 Salvar Print na Planilha" na aba Relatório para salvar.</p></div>';
+                    setSyncStatus('success', 'Carregado');
+                    return;
+                }
+                
+                let html = '';
+                for (const item of dados) {
+                    const dataFormatada = new Date(item.data).toLocaleString('pt-BR');
+                    
+                    html += `
+                        <div class="historico-item">
+                            <div class="historico-header">
+                                <div class="historico-titulo">
+                                    <i class="fas fa-camera" style="color: #8b5cf6;"></i> ${escapeHtml(item.nome)}
+                                    <span class="badge-sheets"><i class="fab fa-google"></i> Planilha</span>
+                                </div>
+                                <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
+                            </div>
+                            ${item.descricao ? `<div class="historico-descricao"><i class="fas fa-comment"></i> ${escapeHtml(item.descricao)}</div>` : ''}
+                            <div class="historico-descricao">
+                                <i class="fas fa-user"></i> ${escapeHtml(item.usuario)} | 
+                                <i class="fas fa-chart-bar"></i> ${item.totalItens} itens
+                            </div>
+                            <img src="${item.imagemUrl}" class="historico-imagem" onclick="verImagemGrande('${item.imagemUrl}')" alt="Print da tabela">
+                            <div class="historico-actions" style="margin-top: 10px;">
+                                <a href="${item.imagemUrl}" download="${item.nome.replace(/[^a-z0-9]/gi, '_')}.png" class="btn-info btn-small" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; color: white; background: #3b82f6; padding: 0.3rem 0.8rem; border-radius: 8px;">
+                                    <i class="fas fa-download"></i> Baixar
+                                </a>
+                                <button class="btn-danger btn-small" onclick="excluirPrintPlanilha('${item.id}', '${escapeHtml(item.nome)}')">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+                setSyncStatus('success', 'Carregado');
+                
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                container.innerHTML = '<div class="empty-state"><p>❌ Erro ao carregar prints da planilha</p></div>';
+                setSyncStatus('error', 'Erro');
+            }
+        }
+        
+        // Excluir print da planilha
+        async function excluirPrintPlanilha(printId, nomePrint) {
+            if (!confirm(`Tem certeza que deseja excluir "${nomePrint}" da planilha?`)) {
                 return;
             }
             
-            let html = '';
-            for (const print of historicoPrints) {
-                const dataFormatada = new Date(print.data).toLocaleString('pt-BR');
-                html += `
-                    <div class="historico-item">
-                        <div class="historico-header">
-                            <div class="historico-titulo">
-                                <i class="fas fa-camera" style="color: #8b5cf6;"></i> ${escapeHtml(print.titulo)}
-                                <span class="badge-print">Print</span>
-                            </div>
-                            <div class="historico-data"><i class="far fa-calendar-alt"></i> ${dataFormatada}</div>
-                        </div>
-                        ${print.descricao ? `<div class="historico-descricao"><i class="fas fa-comment"></i> ${escapeHtml(print.descricao)}</div>` : ''}
-                        <div class="historico-descricao">
-                            <i class="fas fa-user"></i> ${escapeHtml(print.usuario)}
-                        </div>
-                        <img src="${print.imagem}" class="historico-imagem" onclick="verImagemGrande('${print.id}')" alt="Print da tabela">
-                        <div class="historico-actions" style="margin-top: 10px;">
-                            <button class="btn-danger btn-small" onclick="excluirPrint(${print.id})"><i class="fas fa-trash"></i> Excluir Print</button>
-                        </div>
-                    </div>
-                `;
+            setSyncStatus('syncing', 'Excluindo...');
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'excluir',
+                        id: printId
+                    })
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    setSyncStatus('success', 'Excluído');
+                    alert(`🗑️ Print "${nomePrint}" excluído da planilha!`);
+                    carregarPrintsDaPlanilha();
+                } else {
+                    throw new Error(resultado.error || 'Erro ao excluir');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                setSyncStatus('error', 'Erro');
+                alert('❌ Erro ao excluir: ' + error.message);
             }
-            container.innerHTML = html;
         }
         
-        function verImagemGrande(printId) {
-            const print = historicoPrints.find(p => p.id === printId);
-            if (!print) return;
-            
+        // Ver imagem em tamanho grande
+        function verImagemGrande(imagemUrl) {
             const modal = document.createElement('div');
             modal.className = 'imagem-modal';
             modal.onclick = () => modal.remove();
             
             const img = document.createElement('img');
-            img.src = print.imagem;
+            img.src = imagemUrl;
             img.style.maxWidth = '90%';
             img.style.maxHeight = '90%';
             
             modal.appendChild(img);
             document.body.appendChild(modal);
-        }
-        
-        function excluirPrint(printId) {
-            if (confirm('Tem certeza que deseja excluir este print?')) {
-                historicoPrints = historicoPrints.filter(p => p.id !== printId);
-                salvarPrintsStorage();
-                alert('🗑️ Print excluído!');
-            }
-        }
-        
-        function limparTodosPrints() {
-            if (confirm('⚠️ Tem certeza que deseja limpar TODOS os prints do histórico?')) {
-                historicoPrints = [];
-                salvarPrintsStorage();
-                alert('🗑️ Todos os prints foram excluídos!');
-            }
         }
         
         function escapeHtml(text) {
@@ -908,7 +977,7 @@
             let html = '<div class="table-wrapper">\n<table>\n<thead>\n<tr>';
             html += '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>';
             html += '<th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
-            html += '</tr></thead><tbody>';
+            html += '</table></thead><tbody>';
             for (const escola of resultados) {
                 const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
                 html += `<tr class="${isSelected ? 'selected-row' : ''}">`;
@@ -1101,7 +1170,7 @@
             html += '<th colspan="2" style="background: #fff3cd;">2024</th>';
             html += '<th colspan="2" style="background: #fff3cd;">2025</th>';
             html += '<th colspan="2" style="background: #fff3cd;">2026</th>';
-            html += '</tr>';
+            html += '<tr>';
             html += '<tr style="background: #6b7280;">';
             html += '<th style="background: #fff3cd;">Federal - PNAE</th>';
             html += '<th style="background: #fff3cd;">Estadual - FAED</th>';
@@ -1230,7 +1299,7 @@
         
         // Tornar funções globais
         window.verImagemGrande = verImagemGrande;
-        window.excluirPrint = excluirPrint;
+        window.excluirPrintPlanilha = excluirPrintPlanilha;
         
         // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
@@ -1245,8 +1314,9 @@
         document.getElementById('exportExcelBtn').onclick = exportResumoExcel;
         document.getElementById('exportGerarPDFBtn').onclick = exportGerarPDF;
         document.getElementById('exportGerarExcelBtn').onclick = exportGerarExcel;
-        document.getElementById('salvarPrintBtn').onclick = salvarPrintNoHistorico;
-        document.getElementById('limparHistoricoBtn').onclick = limparTodosPrints;
+        document.getElementById('salvarPrintBtn').onclick = salvarPrintNaPlanilha;
+        document.getElementById('carregarPlanilhaBtn').onclick = carregarPrintsDaPlanilha;
+        document.getElementById('atualizarHistoricoBtn').onclick = carregarPrintsDaPlanilha;
         document.getElementById('searchValue').addEventListener('input', autoFiltro);
         
         document.querySelectorAll('.tab').forEach(tab => {
@@ -1260,13 +1330,12 @@
                 document.getElementById('linksTab').style.display = 'none';
                 document.getElementById(tab.dataset.tab + 'Tab').style.display = 'block';
                 if (tab.dataset.tab === 'relatorio') renderResumoConsolidado();
-                if (tab.dataset.tab === 'historico') carregarPrintsSalvos();
+                if (tab.dataset.tab === 'historico') carregarPrintsDaPlanilha();
             };
         });
         
         // Inicializar
         carregarDadosPlanilha();
-        carregarPrintsSalvos();
     </script>
 </body>
 </html>
