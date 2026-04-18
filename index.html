@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  
+    <script>
+        // Verifica se o usuário está logado
+        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        }
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,9 +49,14 @@
         .btn-info:hover { background: #2563eb; }
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-purple:hover { background: #7c3aed; }
-        .file-upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .file-upload-area input[type="file"] { flex: 1; }
-        .upload-help { font-size: 0.7rem; color: #64748b; margin-top: 0.5rem; }
+        .file-upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
+        .file-upload-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .upload-type-selector { display: flex; gap: 0.5rem; margin: 1rem 0; padding: 0.5rem; background: #f1f5f9; border-radius: 12px; }
+        .type-option { flex: 1; text-align: center; padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .type-option:hover { background: #e2e8f0; }
+        .type-option.active { background: #2f80ed; color: white; }
+        .type-option i { margin-right: 5px; }
+        .upload-help { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border-radius: 8px; }
         .table-wrapper { overflow-x: auto; margin-top: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
         th, td { padding: 0.5rem 0.5rem; border: 1px solid #d1d5db; text-align: center; vertical-align: middle; }
@@ -99,6 +110,7 @@
         .th-repasse { background: #edd5be !important; color: #5a3e1b; }
         .usuario-info { background: #e0f2fe; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .cloud-badge { background: #10b981; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 20px; margin-left: 8px; }
+        .result-summary { background: #f0fdf4; padding: 0.75rem; border-radius: 8px; margin-top: 1rem; font-size: 0.8rem; }
         @media print {
             body { background: white; }
             .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container { display: none !important; }
@@ -146,24 +158,52 @@
                     </div>
                 </div>
                 
-                <!-- NOVA ÁREA DE UPLOAD DE CÓDIGOS -->
-                <div class="file-upload-area" style="margin-top: 1rem;">
-                    <i class="fas fa-file-excel" style="font-size: 1.5rem; color: #10b981;"></i>
-                    <div style="flex: 1;">
-                        <input type="file" id="codigosFile" accept=".xlsx, .xls, .csv" style="display: none;">
-                        <button class="btn-secondary" id="uploadCodigosBtn" style="margin-right: 1rem;">
-                            <i class="fas fa-upload"></i> Selecionar Arquivo
+                <!-- NOVA ÁREA DE UPLOAD MULTI-TIPO -->
+                <div class="file-upload-area">
+                    <div class="file-upload-header">
+                        <i class="fas fa-file-excel" style="font-size: 2rem; color: #10b981;"></i>
+                        <div style="flex: 1;">
+                            <h4 style="margin-bottom: 0.25rem;"><i class="fas fa-upload"></i> Upload de Lista</h4>
+                            <p style="font-size: 0.8rem; color: #64748b;">Carregue uma lista de NTE, Municípios ou Códigos SEC</p>
+                        </div>
+                        <button class="btn-secondary" id="uploadListaBtn">
+                            <i class="fas fa-folder-open"></i> Selecionar Arquivo
                         </button>
-                        <span id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</span>
-                        <div class="upload-help">
-                            <i class="fas fa-info-circle"></i> 
-                            <strong>Formato esperado:</strong> Arquivo Excel (.xlsx, .xls) ou CSV com os códigos na <strong>Coluna A</strong>. 
-                            O sistema identificará as escolas correspondentes e marcará os checkboxes automaticamente.
+                        <input type="file" id="listaFile" accept=".xlsx, .xls, .csv" style="display: none;">
+                    </div>
+                    
+                    <div class="upload-type-selector">
+                        <div class="type-option" data-tipo="NTE">
+                            <i class="fas fa-map-marker-alt"></i> Lista de NTE
+                        </div>
+                        <div class="type-option" data-tipo="MUNICIPIO">
+                            <i class="fas fa-city"></i> Lista de Municípios
+                        </div>
+                        <div class="type-option active" data-tipo="CODIGO">
+                            <i class="fas fa-barcode"></i> Lista de Códigos SEC
                         </div>
                     </div>
-                    <button class="btn-primary" id="processarCodigosBtn" style="display: none;">
-                        <i class="fas fa-play"></i> Identificar e Selecionar
-                    </button>
+                    
+                    <div id="uploadStatus" style="margin-top: 0.5rem;">
+                        <span id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</span>
+                    </div>
+                    
+                    <div class="upload-help">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Como funciona:</strong> 
+                        O sistema identifica automaticamente o tipo de lista que você está enviando e seleciona todas as escolas correspondentes.
+                        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                            <li><strong>Lista de NTE:</strong> Seleciona TODAS as escolas do NTE informado</li>
+                            <li><strong>Lista de Municípios:</strong> Seleciona TODAS as escolas do município informado</li>
+                            <li><strong>Lista de Códigos SEC:</strong> Seleciona as escolas específicas pelos códigos</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="processArea" style="margin-top: 1rem; display: none;">
+                        <button class="btn-primary" id="processarListaBtn" style="width: 100%;">
+                            <i class="fas fa-play"></i> Identificar e Selecionar Escolas
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="info-message" style="margin-top: 1rem;">
@@ -279,10 +319,9 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO - COLE A URL DO SEU WEB APP AQUI!
+        // CONFIGURAÇÃO
         // ============================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCeJT12TYgeJn7TzDPSUwLHnRvyUqfR7SxwY0rERbTPYyjtvZDdKxOBmGdNHeDj0d0/exec';
-        // ============================================
         
         const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
         document.getElementById('userNameDisplay').textContent = usuarioNome;
@@ -325,7 +364,11 @@
         
         let listasSalvas = [];
         let historicoNotas = [];
-        let uploadedCodigos = []; // Array para armazenar os códigos carregados do arquivo
+        
+        // Variáveis para upload
+        let uploadedData = [];
+        let uploadTipo = 'CODIGO'; // NTE, MUNICIPIO, CODIGO
+        let currentFileName = '';
         
         // ============================================
         // FUNÇÕES DO GOOGLE SHEETS (CLOUD)
@@ -647,14 +690,14 @@
         window.excluirNotaHistorico = excluirNotaHistorico;
         
         // ============================================
-        // NOVA FUNÇÃO: PROCESSAR UPLOAD DE CÓDIGOS
+        // FUNÇÕES DE UPLOAD MULTI-TIPO
         // ============================================
         
-        function processarUploadCodigos(file) {
+        function processarUploadLista(file) {
             if (!file) return;
             
-            const fileName = file.name;
-            document.getElementById('fileNameDisplay').textContent = fileName;
+            currentFileName = file.name;
+            document.getElementById('fileNameDisplay').innerHTML = `<i class="fas fa-file-excel"></i> ${currentFileName}`;
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -669,31 +712,38 @@
                         return;
                     }
                     
-                    // Extrair códigos da coluna A (índice 0)
-                    const codigos = [];
+                    // Extrair valores da coluna A (índice 0)
+                    const valores = [];
                     for (let i = 0; i < jsonData.length; i++) {
-                        let codigo = jsonData[i][0];
-                        if (codigo && typeof codigo === 'string') {
-                            codigo = codigo.trim();
-                            if (codigo !== '') {
-                                // Remover possíveis aspas
-                                codigo = codigo.replace(/^["']|["']$/g, '');
-                                codigos.push(codigo);
+                        let valor = jsonData[i][0];
+                        if (valor && typeof valor === 'string') {
+                            valor = valor.trim();
+                            if (valor !== '') {
+                                valor = valor.replace(/^["']|["']$/g, '');
+                                valores.push(valor);
                             }
-                        } else if (codigo && typeof codigo === 'number') {
-                            codigos.push(codigo.toString());
+                        } else if (valor && typeof valor === 'number') {
+                            valores.push(valor.toString());
                         }
                     }
                     
-                    if (codigos.length === 0) {
-                        alert('❌ Nenhum código encontrado na coluna A do arquivo!');
+                    if (valores.length === 0) {
+                        alert('❌ Nenhum valor encontrado na coluna A do arquivo!');
                         return;
                     }
                     
-                    uploadedCodigos = codigos;
-                    document.getElementById('processarCodigosBtn').style.display = 'inline-flex';
+                    uploadedData = valores;
+                    document.getElementById('processArea').style.display = 'block';
                     
-                    alert(`✅ ${codigos.length} código(s) carregados com sucesso!\nClique em "Identificar e Selecionar" para marcar as escolas correspondentes.`);
+                    const tipoDisplay = {
+                        'NTE': 'NTE',
+                        'MUNICIPIO': 'Município',
+                        'CODIGO': 'Código SEC'
+                    };
+                    
+                    document.getElementById('processarListaBtn').innerHTML = `<i class="fas fa-play"></i> Identificar e Selecionar (${valores.length} ${tipoDisplay[uploadTipo]}(s))`;
+                    
+                    alert(`✅ ${valores.length} ${tipoDisplay[uploadTipo]}(s) carregados com sucesso!\nClique em "Identificar e Selecionar" para marcar as escolas correspondentes.`);
                     
                 } catch (error) {
                     console.error('Erro ao processar arquivo:', error);
@@ -703,9 +753,9 @@
             reader.readAsArrayBuffer(file);
         }
         
-        function identificarESelecionarEscolas() {
-            if (uploadedCodigos.length === 0) {
-                alert('⚠️ Nenhum código carregado. Selecione um arquivo primeiro.');
+        function identificarESelecionarPorLista() {
+            if (uploadedData.length === 0) {
+                alert('⚠️ Nenhum dado carregado. Selecione um arquivo primeiro.');
                 return;
             }
             
@@ -717,47 +767,83 @@
             // Limpar seleções atuais
             escolasSelecionadas = [];
             
-            // Mapear códigos para busca mais rápida
-            const codigosSet = new Set(uploadedCodigos.map(c => c.toString().trim()));
+            // Normalizar dados para busca
+            const valoresSet = new Set(uploadedData.map(v => v.toString().trim().toUpperCase()));
             
-            // Encontrar escolas correspondentes
             let encontradas = [];
-            for (const escola of escolasData) {
-                const codigoSec = escola.codigoSec ? escola.codigoSec.toString().trim() : '';
-                if (codigosSet.has(codigoSec)) {
-                    encontradas.push(escola);
+            let naoEncontrados = [];
+            
+            // Buscar baseado no tipo selecionado
+            for (const valor of uploadedData) {
+                const valorNormalizado = valor.toString().trim().toUpperCase();
+                let escolasEncontradas = [];
+                
+                if (uploadTipo === 'NTE') {
+                    escolasEncontradas = escolasData.filter(escola => 
+                        escola.nte && escola.nte.toString().trim().toUpperCase() === valorNormalizado
+                    );
+                } else if (uploadTipo === 'MUNICIPIO') {
+                    escolasEncontradas = escolasData.filter(escola => 
+                        escola.municipio && normalizarTexto(escola.municipio) === valorNormalizado
+                    );
+                } else { // CODIGO
+                    escolasEncontradas = escolasData.filter(escola => 
+                        escola.codigoSec && escola.codigoSec.toString().trim().toUpperCase() === valorNormalizado
+                    );
+                }
+                
+                if (escolasEncontradas.length > 0) {
+                    encontradas.push(...escolasEncontradas);
+                } else {
+                    naoEncontrados.push(valor);
                 }
             }
             
-            if (encontradas.length === 0) {
-                alert(`⚠️ Nenhuma escola encontrada com os ${uploadedCodigos.length} código(s) informados.\n\nVerifique se os códigos estão corretos e se a lista de escolas foi carregada.`);
+            // Remover duplicatas (mesma escola pode ser encontrada por diferentes critérios)
+            const encontradasUnicas = [];
+            const codigosSet = new Set();
+            for (const escola of encontradas) {
+                if (!codigosSet.has(escola.codigoSec)) {
+                    codigosSet.add(escola.codigoSec);
+                    encontradasUnicas.push(escola);
+                }
+            }
+            
+            if (encontradasUnicas.length === 0) {
+                alert(`⚠️ Nenhuma escola encontrada com os ${uploadedData.length} ${getTipoDisplay()} informados.\n\nVerifique os dados e tente novamente.`);
                 return;
             }
             
             // Selecionar as escolas encontradas
-            escolasSelecionadas = encontradas;
+            escolasSelecionadas = encontradasUnicas;
             
             // Atualizar a interface
             renderGerarTabela();
             atualizarCardsGerarValor();
             
-            // Atualizar checkboxes na aba consulta se estiver visível
+            // Atualizar checkboxes na aba consulta
             if (document.getElementById('consultaTab').style.display !== 'none') {
                 atualizarCheckboxesConsulta();
-                // Rolar até a tabela
-                document.getElementById('resultsTable').scrollIntoView({ behavior: 'smooth' });
             }
             
-            // Mostrar resultado
-            const naoEncontrados = uploadedCodigos.length - encontradas.length;
-            let mensagem = `✅ ${encontradas.length} escola(s) identificada(s) e selecionada(s)!`;
-            if (naoEncontrados > 0) {
-                mensagem += `\n⚠️ ${naoEncontrados} código(s) não encontrado(s) na base de escolas.`;
+            // Mostrar resultado detalhado
+            const tipoDisplay = getTipoDisplay();
+            let mensagem = `✅ ${encontradasUnicas.length} escola(s) selecionada(s) com base ${encontradasUnicas.length === 1 ? `no ${tipoDisplay}` : `nos ${tipoDisplay}s`}:`;
+            mensagem += `\n\n📊 ${uploadedData.length} ${tipoDisplay}(s) processado(s)`;
+            mensagem += `\n✅ ${encontradasUnicas.length} escola(s) encontrada(s)`;
+            
+            if (naoEncontrados.length > 0) {
+                mensagem += `\n⚠️ ${naoEncontrados.length} ${tipoDisplay}(s) não encontrado(s):`;
+                mensagem += `\n${naoEncontrados.slice(0, 10).join(', ')}`;
+                if (naoEncontrados.length > 10) {
+                    mensagem += `\n... e mais ${naoEncontrados.length - 10}`;
+                }
             }
+            
             alert(mensagem);
             
             // Opcional: ir para aba Gerar Valor
-            if (confirm(`Deseja ir para a aba "Gerar Valor" para visualizar as ${encontradas.length} escolas selecionadas?`)) {
+            if (confirm(`Deseja ir para a aba "Gerar Valor" para visualizar as ${encontradasUnicas.length} escolas selecionadas?`)) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelector('.tab[data-tab="gerar"]').classList.add('active');
                 document.getElementById('consultaTab').style.display = 'none';
@@ -766,6 +852,15 @@
                 document.getElementById('historicoTab').style.display = 'none';
                 document.getElementById('linksTab').style.display = 'none';
             }
+        }
+        
+        function getTipoDisplay() {
+            const tipos = {
+                'NTE': 'NTE',
+                'MUNICIPIO': 'Município',
+                'CODIGO': 'Código SEC'
+            };
+            return tipos[uploadTipo] || 'item';
         }
         
         function formatarValorBR(valor) {
@@ -1072,10 +1167,10 @@
             }
             let html = '<div class="table-wrapper">\n<table>\n<thead>';
             html += '<tr style="background: #9ca3af;"><th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
-            html += '<th colspan="4">FAED</th><th colspan="8">ALIMENTAÇÃO</th></tr>';
+            html += '<th colspan="4">FAED</th><th colspan="8">ALIMENTAÇÃO</th> </tr>';
             html += '<tr style="background: #6b7280;"><th></th><th></th><th></th><th></th><th></th>';
             html += '<th>2023</th><th>2024</th><th>2025</th><th>2026</th>';
-            html += '<th>Fed23</th><th>Est23</th><th>Fed24</th><th>Est24</th><th>Fed25</th><th>Est25</th><th>Fed26</th><th>Est26</th></tr>';
+            html += '<th>Fed23</th><th>Est23</th><th>Fed24</th><th>Est24</th><th>Fed25</th><th>Est25</th><th>Fed26</th><th>Est26</th> </tr>';
             html += '</thead><tbody>';
             for (const escola of escolasSelecionadas) {
                 html += '<tr>';
@@ -1344,16 +1439,35 @@
         document.getElementById('exportarListasBtn').onclick = exportarListasExcel;
         document.getElementById('searchValue').addEventListener('input', autoFiltro);
         
-        // Eventos para upload de códigos
-        document.getElementById('uploadCodigosBtn').onclick = () => {
-            document.getElementById('codigosFile').click();
+        // Eventos para upload de lista
+        document.getElementById('uploadListaBtn').onclick = () => {
+            document.getElementById('listaFile').click();
         };
-        document.getElementById('codigosFile').onchange = (e) => {
+        document.getElementById('listaFile').onchange = (e) => {
             if (e.target.files.length > 0) {
-                processarUploadCodigos(e.target.files[0]);
+                processarUploadLista(e.target.files[0]);
             }
         };
-        document.getElementById('processarCodigosBtn').onclick = identificarESelecionarEscolas;
+        document.getElementById('processarListaBtn').onclick = identificarESelecionarPorLista;
+        
+        // Seletor de tipo de upload
+        document.querySelectorAll('.type-option').forEach(opt => {
+            opt.onclick = () => {
+                document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                uploadTipo = opt.dataset.tipo;
+                // Resetar área de processamento se já havia algo carregado
+                if (uploadedData.length > 0) {
+                    document.getElementById('processArea').style.display = 'block';
+                    const tipoDisplay = {
+                        'NTE': 'NTE',
+                        'MUNICIPIO': 'Município',
+                        'CODIGO': 'Código SEC'
+                    };
+                    document.getElementById('processarListaBtn').innerHTML = `<i class="fas fa-play"></i> Identificar e Selecionar (${uploadedData.length} ${tipoDisplay[uploadTipo]}(s))`;
+                }
+            };
+        });
         
         document.querySelectorAll('.tab').forEach(tab => {
             tab.onclick = () => {
