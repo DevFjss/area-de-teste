@@ -1,18 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  
 
-
-     <script>
-        // Verifica se o usuário está logado
-        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
-        if (!usuarioLogado) {
-            // Redireciona para o login
-            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
-        }
-    </script>
-
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Técnica · CDF - Sistema Integrado</title>
@@ -53,6 +43,9 @@
         .btn-info:hover { background: #2563eb; }
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-purple:hover { background: #7c3aed; }
+        .file-upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .file-upload-area input[type="file"] { flex: 1; }
+        .upload-help { font-size: 0.7rem; color: #64748b; margin-top: 0.5rem; }
         .table-wrapper { overflow-x: auto; margin-top: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
         th, td { padding: 0.5rem 0.5rem; border: 1px solid #d1d5db; text-align: center; vertical-align: middle; }
@@ -152,6 +145,27 @@
                         <button class="btn-primary" id="exportToGerarBtn"><i class="fas fa-arrow-right"></i> Enviar Selecionados</button>
                     </div>
                 </div>
+                
+                <!-- NOVA ÁREA DE UPLOAD DE CÓDIGOS -->
+                <div class="file-upload-area" style="margin-top: 1rem;">
+                    <i class="fas fa-file-excel" style="font-size: 1.5rem; color: #10b981;"></i>
+                    <div style="flex: 1;">
+                        <input type="file" id="codigosFile" accept=".xlsx, .xls, .csv" style="display: none;">
+                        <button class="btn-secondary" id="uploadCodigosBtn" style="margin-right: 1rem;">
+                            <i class="fas fa-upload"></i> Selecionar Arquivo
+                        </button>
+                        <span id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</span>
+                        <div class="upload-help">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Formato esperado:</strong> Arquivo Excel (.xlsx, .xls) ou CSV com os códigos na <strong>Coluna A</strong>. 
+                            O sistema identificará as escolas correspondentes e marcará os checkboxes automaticamente.
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="processarCodigosBtn" style="display: none;">
+                        <i class="fas fa-play"></i> Identificar e Selecionar
+                    </button>
+                </div>
+                
                 <div class="info-message" style="margin-top: 1rem;">
                     <i class="fas fa-info-circle"></i> 
                     <strong>Filtro automático:</strong> Digite na caixa acima para filtrar por NTE (exato), Município (exato), Código SEC, Código INEP ou Unidade Escolar (contém)<br>
@@ -267,8 +281,6 @@
         // ============================================
         // CONFIGURAÇÃO - COLE A URL DO SEU WEB APP AQUI!
         // ============================================
-        // DEPOIS DE CRIAR A IMPLANTAÇÃO NO GOOGLE APPS SCRIPT,
-        // COPIE A URL E COLE AQUI:
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCeJT12TYgeJn7TzDPSUwLHnRvyUqfR7SxwY0rERbTPYyjtvZDdKxOBmGdNHeDj0d0/exec';
         // ============================================
         
@@ -313,6 +325,7 @@
         
         let listasSalvas = [];
         let historicoNotas = [];
+        let uploadedCodigos = []; // Array para armazenar os códigos carregados do arquivo
         
         // ============================================
         // FUNÇÕES DO GOOGLE SHEETS (CLOUD)
@@ -633,6 +646,128 @@
         window.carregarNotaHistorico = carregarNotaHistorico;
         window.excluirNotaHistorico = excluirNotaHistorico;
         
+        // ============================================
+        // NOVA FUNÇÃO: PROCESSAR UPLOAD DE CÓDIGOS
+        // ============================================
+        
+        function processarUploadCodigos(file) {
+            if (!file) return;
+            
+            const fileName = file.name;
+            document.getElementById('fileNameDisplay').textContent = fileName;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+                    
+                    if (!jsonData || jsonData.length === 0) {
+                        alert('❌ Arquivo vazio ou não contém dados!');
+                        return;
+                    }
+                    
+                    // Extrair códigos da coluna A (índice 0)
+                    const codigos = [];
+                    for (let i = 0; i < jsonData.length; i++) {
+                        let codigo = jsonData[i][0];
+                        if (codigo && typeof codigo === 'string') {
+                            codigo = codigo.trim();
+                            if (codigo !== '') {
+                                // Remover possíveis aspas
+                                codigo = codigo.replace(/^["']|["']$/g, '');
+                                codigos.push(codigo);
+                            }
+                        } else if (codigo && typeof codigo === 'number') {
+                            codigos.push(codigo.toString());
+                        }
+                    }
+                    
+                    if (codigos.length === 0) {
+                        alert('❌ Nenhum código encontrado na coluna A do arquivo!');
+                        return;
+                    }
+                    
+                    uploadedCodigos = codigos;
+                    document.getElementById('processarCodigosBtn').style.display = 'inline-flex';
+                    
+                    alert(`✅ ${codigos.length} código(s) carregados com sucesso!\nClique em "Identificar e Selecionar" para marcar as escolas correspondentes.`);
+                    
+                } catch (error) {
+                    console.error('Erro ao processar arquivo:', error);
+                    alert('❌ Erro ao processar o arquivo. Verifique se o formato está correto.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function identificarESelecionarEscolas() {
+            if (uploadedCodigos.length === 0) {
+                alert('⚠️ Nenhum código carregado. Selecione um arquivo primeiro.');
+                return;
+            }
+            
+            if (escolasData.length === 0) {
+                alert('⚠️ Lista de escolas não carregada. Clique em "Carregar Dados" primeiro.');
+                return;
+            }
+            
+            // Limpar seleções atuais
+            escolasSelecionadas = [];
+            
+            // Mapear códigos para busca mais rápida
+            const codigosSet = new Set(uploadedCodigos.map(c => c.toString().trim()));
+            
+            // Encontrar escolas correspondentes
+            let encontradas = [];
+            for (const escola of escolasData) {
+                const codigoSec = escola.codigoSec ? escola.codigoSec.toString().trim() : '';
+                if (codigosSet.has(codigoSec)) {
+                    encontradas.push(escola);
+                }
+            }
+            
+            if (encontradas.length === 0) {
+                alert(`⚠️ Nenhuma escola encontrada com os ${uploadedCodigos.length} código(s) informados.\n\nVerifique se os códigos estão corretos e se a lista de escolas foi carregada.`);
+                return;
+            }
+            
+            // Selecionar as escolas encontradas
+            escolasSelecionadas = encontradas;
+            
+            // Atualizar a interface
+            renderGerarTabela();
+            atualizarCardsGerarValor();
+            
+            // Atualizar checkboxes na aba consulta se estiver visível
+            if (document.getElementById('consultaTab').style.display !== 'none') {
+                atualizarCheckboxesConsulta();
+                // Rolar até a tabela
+                document.getElementById('resultsTable').scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Mostrar resultado
+            const naoEncontrados = uploadedCodigos.length - encontradas.length;
+            let mensagem = `✅ ${encontradas.length} escola(s) identificada(s) e selecionada(s)!`;
+            if (naoEncontrados > 0) {
+                mensagem += `\n⚠️ ${naoEncontrados} código(s) não encontrado(s) na base de escolas.`;
+            }
+            alert(mensagem);
+            
+            // Opcional: ir para aba Gerar Valor
+            if (confirm(`Deseja ir para a aba "Gerar Valor" para visualizar as ${encontradas.length} escolas selecionadas?`)) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('.tab[data-tab="gerar"]').classList.add('active');
+                document.getElementById('consultaTab').style.display = 'none';
+                document.getElementById('gerarTab').style.display = 'block';
+                document.getElementById('relatorioTab').style.display = 'none';
+                document.getElementById('historicoTab').style.display = 'none';
+                document.getElementById('linksTab').style.display = 'none';
+            }
+        }
+        
         function formatarValorBR(valor) {
             if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
             return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -885,18 +1020,21 @@
                     atualizarCardsGerarValor();
                 };
             });
-            document.getElementById('selectAllCheckbox').onchange = (e) => {
-                const isChecked = e.target.checked;
-                document.querySelectorAll('.school-checkbox').forEach(cb => {
-                    cb.checked = isChecked;
-                    const codigo = cb.dataset.codigo;
-                    const escola = escolasData.find(e => e.codigoSec === codigo);
-                    if (isChecked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) escolasSelecionadas.push(escola);
-                    else if (!isChecked) escolasSelecionadas = [];
-                });
-                renderGerarTabela();
-                atualizarCardsGerarValor();
-            };
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.onchange = (e) => {
+                    const isChecked = e.target.checked;
+                    document.querySelectorAll('.school-checkbox').forEach(cb => {
+                        cb.checked = isChecked;
+                        const codigo = cb.dataset.codigo;
+                        const escola = escolasData.find(e => e.codigoSec === codigo);
+                        if (isChecked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) escolasSelecionadas.push(escola);
+                        else if (!isChecked) escolasSelecionadas = [];
+                    });
+                    renderGerarTabela();
+                    atualizarCardsGerarValor();
+                };
+            }
         }
         
         function atualizarCheckboxesConsulta() {
@@ -1187,6 +1325,7 @@
             return div.innerHTML;
         }
         
+        // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
@@ -1204,6 +1343,17 @@
         document.getElementById('limparHistoricoBtn').onclick = limparHistoricoNotas;
         document.getElementById('exportarListasBtn').onclick = exportarListasExcel;
         document.getElementById('searchValue').addEventListener('input', autoFiltro);
+        
+        // Eventos para upload de códigos
+        document.getElementById('uploadCodigosBtn').onclick = () => {
+            document.getElementById('codigosFile').click();
+        };
+        document.getElementById('codigosFile').onchange = (e) => {
+            if (e.target.files.length > 0) {
+                processarUploadCodigos(e.target.files[0]);
+            }
+        };
+        document.getElementById('processarCodigosBtn').onclick = identificarESelecionarEscolas;
         
         document.querySelectorAll('.tab').forEach(tab => {
             tab.onclick = () => {
