@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  
+    <script>
+        // Verifica se o usuário está logado
+        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        }
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,12 +50,15 @@
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-purple:hover { background: #7c3aed; }
         .file-upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
-        .file-upload-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
         .upload-type-selector { display: flex; gap: 0.5rem; margin: 1rem 0; padding: 0.5rem; background: #f1f5f9; border-radius: 12px; }
         .type-option { flex: 1; text-align: center; padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .type-option:hover { background: #e2e8f0; }
         .type-option.active { background: #2f80ed; color: white; }
         .type-option i { margin-right: 5px; }
+        .paste-area { background: #ffffff; border: 2px solid #cbd5e1; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+        .paste-area textarea { width: 100%; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85rem; resize: vertical; }
+        .paste-area textarea:focus { outline: none; border-color: #2f80ed; }
+        .paste-example { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 8px; }
         .upload-help { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border-radius: 8px; }
         .table-wrapper { overflow-x: auto; margin-top: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1200px; }
@@ -105,6 +114,11 @@
         .usuario-info { background: #e0f2fe; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .cloud-badge { background: #10b981; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 20px; margin-left: 8px; }
         .result-summary { background: #f0fdf4; padding: 0.75rem; border-radius: 8px; margin-top: 1rem; font-size: 0.8rem; }
+        .method-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .method-tab { padding: 0.5rem 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; }
+        .method-tab.active { color: #2f80ed; border-bottom-color: #2f80ed; }
+        .method-content { display: none; }
+        .method-content.active { display: block; }
         @media print {
             body { background: white; }
             .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container { display: none !important; }
@@ -152,49 +166,85 @@
                     </div>
                 </div>
                 
-                <!-- NOVA ÁREA DE UPLOAD MULTI-TIPO -->
+                <!-- ÁREA DE UPLOAD/COLA -->
                 <div class="file-upload-area">
-                    <div class="file-upload-header">
-                        <i class="fas fa-file-excel" style="font-size: 2rem; color: #10b981;"></i>
-                        <div style="flex: 1;">
-                            <h4 style="margin-bottom: 0.25rem;"><i class="fas fa-upload"></i> Upload de Lista</h4>
-                            <p style="font-size: 0.8rem; color: #64748b;">Carregue uma lista de NTE, Municípios ou Códigos SEC</p>
+                    <div class="method-tabs">
+                        <button class="method-tab active" data-method="paste"><i class="fas fa-keyboard"></i> Colar Dados</button>
+                        <button class="method-tab" data-method="upload"><i class="fas fa-upload"></i> Upload de Arquivo</button>
+                    </div>
+                    
+                    <!-- Método 1: Colar dados -->
+                    <div id="pasteMethod" class="method-content active">
+                        <div class="upload-type-selector">
+                            <div class="type-option" data-tipo="NTE">
+                                <i class="fas fa-map-marker-alt"></i> Lista de NTE
+                            </div>
+                            <div class="type-option" data-tipo="MUNICIPIO">
+                                <i class="fas fa-city"></i> Lista de Municípios
+                            </div>
+                            <div class="type-option active" data-tipo="CODIGO">
+                                <i class="fas fa-barcode"></i> Lista de Códigos SEC
+                            </div>
                         </div>
-                        <button class="btn-secondary" id="uploadListaBtn">
-                            <i class="fas fa-folder-open"></i> Selecionar Arquivo
+                        
+                        <div class="paste-area">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                <i class="fas fa-paste"></i> Cole os dados abaixo (um por linha):
+                            </label>
+                            <textarea id="pasteData" rows="5" placeholder="Exemplo:
+1ª CRE
+2ª CRE
+3ª CRE
+
+ou
+
+PORTO ALEGRE
+CAXIAS DO SUL
+PELOTAS
+
+ou
+
+12345
+67890
+11122"></textarea>
+                            <div class="paste-example">
+                                <i class="fas fa-lightbulb"></i> <strong>Dica:</strong> Você pode copiar de qualquer lugar (Excel, Word, Email) e colar aqui. Separe cada item em uma nova linha.
+                            </div>
+                        </div>
+                        
+                        <button class="btn-primary" id="processarPasteBtn" style="width: 100%;">
+                            <i class="fas fa-play"></i> Identificar e Selecionar Escolas
                         </button>
-                        <input type="file" id="listaFile" accept=".xlsx, .xls, .csv" style="display: none;">
                     </div>
                     
-                    <div class="upload-type-selector">
-                        <div class="type-option" data-tipo="NTE">
-                            <i class="fas fa-map-marker-alt"></i> Lista de NTE
+                    <!-- Método 2: Upload de arquivo -->
+                    <div id="uploadMethod" class="method-content">
+                        <div class="upload-type-selector">
+                            <div class="type-option" data-tipo-upload="NTE">
+                                <i class="fas fa-map-marker-alt"></i> Lista de NTE
+                            </div>
+                            <div class="type-option" data-tipo-upload="MUNICIPIO">
+                                <i class="fas fa-city"></i> Lista de Municípios
+                            </div>
+                            <div class="type-option active" data-tipo-upload="CODIGO">
+                                <i class="fas fa-barcode"></i> Lista de Códigos SEC
+                            </div>
                         </div>
-                        <div class="type-option" data-tipo="MUNICIPIO">
-                            <i class="fas fa-city"></i> Lista de Municípios
+                        
+                        <div style="text-align: center; padding: 1rem;">
+                            <i class="fas fa-file-excel" style="font-size: 3rem; color: #10b981;"></i>
+                            <button class="btn-secondary" id="uploadListaBtn" style="margin: 1rem 0;">
+                                <i class="fas fa-folder-open"></i> Selecionar Arquivo
+                            </button>
+                            <input type="file" id="listaFile" accept=".xlsx, .xls, .csv" style="display: none;">
+                            <div id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</div>
+                            <div class="upload-help">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Formato esperado:</strong> Arquivo Excel (.xlsx, .xls) ou CSV com os valores na <strong>Coluna A</strong>.
+                            </div>
                         </div>
-                        <div class="type-option active" data-tipo="CODIGO">
-                            <i class="fas fa-barcode"></i> Lista de Códigos SEC
-                        </div>
-                    </div>
-                    
-                    <div id="uploadStatus" style="margin-top: 0.5rem;">
-                        <span id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</span>
-                    </div>
-                    
-                    <div class="upload-help">
-                        <i class="fas fa-info-circle"></i> 
-                        <strong>Como funciona:</strong> 
-                        O sistema identifica automaticamente o tipo de lista que você está enviando e seleciona todas as escolas correspondentes.
-                        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
-                            <li><strong>Lista de NTE:</strong> Seleciona TODAS as escolas do NTE informado</li>
-                            <li><strong>Lista de Municípios:</strong> Seleciona TODAS as escolas do município informado</li>
-                            <li><strong>Lista de Códigos SEC:</strong> Seleciona as escolas específicas pelos códigos</li>
-                        </ul>
-                    </div>
-                    
-                    <div id="processArea" style="margin-top: 1rem; display: none;">
-                        <button class="btn-primary" id="processarListaBtn" style="width: 100%;">
+                        
+                        <button class="btn-primary" id="processarUploadBtn" style="width: 100%; display: none;">
                             <i class="fas fa-play"></i> Identificar e Selecionar Escolas
                         </button>
                     </div>
@@ -359,10 +409,9 @@
         let listasSalvas = [];
         let historicoNotas = [];
         
-        // Variáveis para upload
+        // Variáveis para upload/cola
         let uploadedData = [];
         let uploadTipo = 'CODIGO'; // NTE, MUNICIPIO, CODIGO
-        let currentFileName = '';
         
         // ============================================
         // FUNÇÕES DO GOOGLE SHEETS (CLOUD)
@@ -684,91 +733,31 @@
         window.excluirNotaHistorico = excluirNotaHistorico;
         
         // ============================================
-        // FUNÇÕES DE UPLOAD MULTI-TIPO
+        // FUNÇÕES PARA PROCESSAR LISTAS (COLA E UPLOAD)
         // ============================================
         
-        function processarUploadLista(file) {
-            if (!file) return;
-            
-            currentFileName = file.name;
-            document.getElementById('fileNameDisplay').innerHTML = `<i class="fas fa-file-excel"></i> ${currentFileName}`;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-                    
-                    if (!jsonData || jsonData.length === 0) {
-                        alert('❌ Arquivo vazio ou não contém dados!');
-                        return;
-                    }
-                    
-                    // Extrair valores da coluna A (índice 0)
-                    const valores = [];
-                    for (let i = 0; i < jsonData.length; i++) {
-                        let valor = jsonData[i][0];
-                        if (valor && typeof valor === 'string') {
-                            valor = valor.trim();
-                            if (valor !== '') {
-                                valor = valor.replace(/^["']|["']$/g, '');
-                                valores.push(valor);
-                            }
-                        } else if (valor && typeof valor === 'number') {
-                            valores.push(valor.toString());
-                        }
-                    }
-                    
-                    if (valores.length === 0) {
-                        alert('❌ Nenhum valor encontrado na coluna A do arquivo!');
-                        return;
-                    }
-                    
-                    uploadedData = valores;
-                    document.getElementById('processArea').style.display = 'block';
-                    
-                    const tipoDisplay = {
-                        'NTE': 'NTE',
-                        'MUNICIPIO': 'Município',
-                        'CODIGO': 'Código SEC'
-                    };
-                    
-                    document.getElementById('processarListaBtn').innerHTML = `<i class="fas fa-play"></i> Identificar e Selecionar (${valores.length} ${tipoDisplay[uploadTipo]}(s))`;
-                    
-                    alert(`✅ ${valores.length} ${tipoDisplay[uploadTipo]}(s) carregados com sucesso!\nClique em "Identificar e Selecionar" para marcar as escolas correspondentes.`);
-                    
-                } catch (error) {
-                    console.error('Erro ao processar arquivo:', error);
-                    alert('❌ Erro ao processar o arquivo. Verifique se o formato está correto.');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-        
-        function identificarESelecionarPorLista() {
-            if (uploadedData.length === 0) {
-                alert('⚠️ Nenhum dado carregado. Selecione um arquivo primeiro.');
-                return;
+        function processarDadosLista(valores) {
+            if (!valores || valores.length === 0) {
+                alert('⚠️ Nenhum dado para processar!');
+                return false;
             }
             
             if (escolasData.length === 0) {
                 alert('⚠️ Lista de escolas não carregada. Clique em "Carregar Dados" primeiro.');
-                return;
+                return false;
             }
             
             // Limpar seleções atuais
             escolasSelecionadas = [];
             
             // Normalizar dados para busca
-            const valoresSet = new Set(uploadedData.map(v => v.toString().trim().toUpperCase()));
+            const valoresSet = new Set(valores.map(v => v.toString().trim().toUpperCase()));
             
             let encontradas = [];
             let naoEncontrados = [];
             
             // Buscar baseado no tipo selecionado
-            for (const valor of uploadedData) {
+            for (const valor of valores) {
                 const valorNormalizado = valor.toString().trim().toUpperCase();
                 let escolasEncontradas = [];
                 
@@ -804,8 +793,8 @@
             }
             
             if (encontradasUnicas.length === 0) {
-                alert(`⚠️ Nenhuma escola encontrada com os ${uploadedData.length} ${getTipoDisplay()} informados.\n\nVerifique os dados e tente novamente.`);
-                return;
+                alert(`⚠️ Nenhuma escola encontrada com os ${valores.length} ${getTipoDisplay()} informados.\n\nVerifique os dados e tente novamente.`);
+                return false;
             }
             
             // Selecionar as escolas encontradas
@@ -823,7 +812,7 @@
             // Mostrar resultado detalhado
             const tipoDisplay = getTipoDisplay();
             let mensagem = `✅ ${encontradasUnicas.length} escola(s) selecionada(s) com base ${encontradasUnicas.length === 1 ? `no ${tipoDisplay}` : `nos ${tipoDisplay}s`}:`;
-            mensagem += `\n\n📊 ${uploadedData.length} ${tipoDisplay}(s) processado(s)`;
+            mensagem += `\n\n📊 ${valores.length} ${tipoDisplay}(s) processado(s)`;
             mensagem += `\n✅ ${encontradasUnicas.length} escola(s) encontrada(s)`;
             
             if (naoEncontrados.length > 0) {
@@ -836,7 +825,7 @@
             
             alert(mensagem);
             
-            // Opcional: ir para aba Gerar Valor
+            // Perguntar se quer ir para aba Gerar Valor
             if (confirm(`Deseja ir para a aba "Gerar Valor" para visualizar as ${encontradasUnicas.length} escolas selecionadas?`)) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelector('.tab[data-tab="gerar"]').classList.add('active');
@@ -846,6 +835,86 @@
                 document.getElementById('historicoTab').style.display = 'none';
                 document.getElementById('linksTab').style.display = 'none';
             }
+            
+            return true;
+        }
+        
+        function processarPaste() {
+            const textarea = document.getElementById('pasteData');
+            const texto = textarea.value;
+            
+            if (!texto || texto.trim() === '') {
+                alert('⚠️ Cole os dados na caixa de texto primeiro!');
+                return;
+            }
+            
+            // Dividir por linhas e limpar
+            const linhas = texto.split(/\r?\n/);
+            const valores = [];
+            
+            for (const linha of linhas) {
+                let valor = linha.trim();
+                if (valor !== '') {
+                    // Remover possíveis caracteres especiais
+                    valor = valor.replace(/^["']|["']$/g, '');
+                    valores.push(valor);
+                }
+            }
+            
+            if (valores.length === 0) {
+                alert('⚠️ Nenhum dado válido encontrado no texto colado!');
+                return;
+            }
+            
+            processarDadosLista(valores);
+        }
+        
+        function processarUploadLista(file) {
+            if (!file) return;
+            
+            document.getElementById('fileNameDisplay').innerHTML = `<i class="fas fa-file-excel"></i> ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+                    
+                    if (!jsonData || jsonData.length === 0) {
+                        alert('❌ Arquivo vazio ou não contém dados!');
+                        return;
+                    }
+                    
+                    // Extrair valores da coluna A (índice 0)
+                    const valores = [];
+                    for (let i = 0; i < jsonData.length; i++) {
+                        let valor = jsonData[i][0];
+                        if (valor && typeof valor === 'string') {
+                            valor = valor.trim();
+                            if (valor !== '') {
+                                valor = valor.replace(/^["']|["']$/g, '');
+                                valores.push(valor);
+                            }
+                        } else if (valor && typeof valor === 'number') {
+                            valores.push(valor.toString());
+                        }
+                    }
+                    
+                    if (valores.length === 0) {
+                        alert('❌ Nenhum valor encontrado na coluna A do arquivo!');
+                        return;
+                    }
+                    
+                    processarDadosLista(valores);
+                    
+                } catch (error) {
+                    console.error('Erro ao processar arquivo:', error);
+                    alert('❌ Erro ao processar o arquivo. Verifique se o formato está correto.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
         
         function getTipoDisplay() {
@@ -1081,10 +1150,10 @@
                 container.innerHTML = '<div class="empty-state"><p>Nenhum resultado</p></div>';
                 return;
             }
-            let html = '<div class="table-wrapper">\n<table>\n<thead>\n<tr>';
+            let html = '<div class="table-wrapper">\n</table>\n<thead>\n<tr>';
             html += '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>';
             html += '<th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
-            html += '</tr></thead><tbody>';
+            html += '</thead><tbody>';
             for (const escola of resultados) {
                 const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
                 html += `<tr class="${isSelected ? 'selected-row' : ''}">`;
@@ -1433,7 +1502,10 @@
         document.getElementById('exportarListasBtn').onclick = exportarListasExcel;
         document.getElementById('searchValue').addEventListener('input', autoFiltro);
         
-        // Eventos para upload de lista
+        // Eventos para colar dados
+        document.getElementById('processarPasteBtn').onclick = processarPaste;
+        
+        // Eventos para upload
         document.getElementById('uploadListaBtn').onclick = () => {
             document.getElementById('listaFile').click();
         };
@@ -1442,24 +1514,33 @@
                 processarUploadLista(e.target.files[0]);
             }
         };
-        document.getElementById('processarListaBtn').onclick = identificarESelecionarPorLista;
         
-        // Seletor de tipo de upload
-        document.querySelectorAll('.type-option').forEach(opt => {
+        // Seletor de método (Colar vs Upload)
+        document.querySelectorAll('.method-tab').forEach(tab => {
+            tab.onclick = () => {
+                const method = tab.dataset.method;
+                document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.method-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(method + 'Method').classList.add('active');
+            };
+        });
+        
+        // Seletores de tipo para método de colar
+        document.querySelectorAll('#pasteMethod .type-option').forEach(opt => {
             opt.onclick = () => {
-                document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+                document.querySelectorAll('#pasteMethod .type-option').forEach(o => o.classList.remove('active'));
                 opt.classList.add('active');
                 uploadTipo = opt.dataset.tipo;
-                // Resetar área de processamento se já havia algo carregado
-                if (uploadedData.length > 0) {
-                    document.getElementById('processArea').style.display = 'block';
-                    const tipoDisplay = {
-                        'NTE': 'NTE',
-                        'MUNICIPIO': 'Município',
-                        'CODIGO': 'Código SEC'
-                    };
-                    document.getElementById('processarListaBtn').innerHTML = `<i class="fas fa-play"></i> Identificar e Selecionar (${uploadedData.length} ${tipoDisplay[uploadTipo]}(s))`;
-                }
+            };
+        });
+        
+        // Seletores de tipo para método de upload
+        document.querySelectorAll('#uploadMethod .type-option').forEach(opt => {
+            opt.onclick = () => {
+                document.querySelectorAll('#uploadMethod .type-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                uploadTipo = opt.dataset.tipoUpload;
             };
         });
         
