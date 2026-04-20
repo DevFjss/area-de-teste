@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    
+  
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,10 +27,11 @@
         .main { padding: 2rem; max-width: 100%; margin: 0 auto; overflow-x: auto; }
         .card { background: white; border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eef2f8; flex-wrap: wrap; gap: 0.5rem; }
-        .search-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .search-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
         .form-group { flex: 2; min-width: 300px; }
         .form-group label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #5c7b9c; margin-bottom: 0.3rem; }
         .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; }
+        .form-group input:focus { outline: none; border-color: #2f80ed; box-shadow: 0 0 0 3px rgba(47,128,237,0.1); }
         button { padding: 0.7rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; transition: all 0.2s; }
         .btn-primary { background: #2f80ed; color: white; }
         .btn-primary:hover { background: #1a68c7; transform: translateY(-1px); }
@@ -40,9 +41,7 @@
         .btn-danger { background: #ef4444; color: white; }
         .btn-warning { background: #f59e0b; color: white; }
         .btn-info { background: #3b82f6; color: white; }
-        .btn-info:hover { background: #2563eb; }
         .btn-purple { background: #8b5cf6; color: white; }
-        .btn-purple:hover { background: #7c3aed; }
         .file-upload-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
         .upload-type-selector { display: flex; gap: 0.5rem; margin: 1rem 0; padding: 0.5rem; background: #f1f5f9; border-radius: 12px; flex-wrap: wrap; }
         .type-option { flex: 1; text-align: center; padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; min-width: 120px; }
@@ -55,68 +54,16 @@
         .paste-example { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 8px; }
         .upload-help { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border-radius: 8px; }
         .table-wrapper { overflow-x: auto; margin-top: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; }
-        
-        /* ESTILOS CORRIGIDOS DA TABELA */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 0.75rem; 
-            min-width: 1000px;
-        }
-        
-        th, td { 
-            padding: 0.75rem 0.5rem; 
-            border: 1px solid #d1d5db; 
-            vertical-align: middle;
-        }
-        
-        /* Cabeçalho da tabela */
-        th { 
-            background: #f1f5f9; 
-            font-weight: 600; 
-            text-align: center;
-            position: sticky;
-            top: 0;
-        }
-        
-        /* Coluna de checkbox */
-        .checkbox-col { 
-            width: 40px; 
-            text-align: center; 
-        }
-        
-        /* Coluna NTE */
-        td:nth-child(2), th:nth-child(2) { 
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        /* Coluna Município */
-        td:nth-child(3), th:nth-child(3) { 
-            text-align: left; 
-        }
-        
-        /* Coluna Código SEC */
-        td:nth-child(4), th:nth-child(4) { 
-            text-align: center; 
-            font-family: 'Courier New', monospace;
-            font-weight: 500;
-        }
-        
-        /* Coluna Código INEP */
-        td:nth-child(5), th:nth-child(5) { 
-            text-align: center; 
-            font-family: 'Courier New', monospace;
-        }
-        
-        /* Coluna Unidade Escolar */
-        td:nth-child(6), th:nth-child(6) { 
-            text-align: left; 
-            min-width: 250px;
-        }
-        
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 1000px; }
+        th, td { padding: 0.75rem 0.5rem; border: 1px solid #d1d5db; vertical-align: middle; }
+        th { background: #f1f5f9; font-weight: 600; text-align: center; position: sticky; top: 0; }
+        .checkbox-col { width: 40px; text-align: center; }
+        td:nth-child(2), th:nth-child(2) { text-align: center; font-weight: 500; }
+        td:nth-child(3), th:nth-child(3) { text-align: left; }
+        td:nth-child(4), th:nth-child(4) { text-align: center; font-family: 'Courier New', monospace; font-weight: 500; }
+        td:nth-child(5), th:nth-child(5) { text-align: center; font-family: 'Courier New', monospace; }
+        td:nth-child(6), th:nth-child(6) { text-align: left; min-width: 250px; }
         .selected-row { background: #e6f4ff; }
-        
         .valor-monetario { font-family: 'Courier New', monospace; font-weight: 500; text-align: right; padding-right: 0.8rem; }
         .report-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
         .info-message { background: #e6f4ff; padding: 0.5rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.8rem; }
@@ -130,8 +77,7 @@
         .valor-card.soma-card { border-left: 5px solid #8b5cf6; background: linear-gradient(135deg, #f8f4ff 0%, #ffffff 100%); }
         .valor-card .card-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #5c7b9c; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
         .valor-card .card-value { font-size: 28px; font-weight: 800; color: #0f172a; font-family: 'Courier New', monospace; }
-        .historico-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; transition: all 0.2s; }
-        .historico-item:hover { background: #f1f5f9; transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .historico-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
         .historico-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
         .historico-titulo { font-weight: bold; font-size: 1rem; color: #0f172a; }
         .historico-data { font-size: 0.75rem; color: #64748b; }
@@ -141,21 +87,15 @@
         .badge-lista { background: #8b5cf6; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; margin-left: 0.5rem; }
         .badge-nota { background: #2f80ed; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; margin-left: 0.5rem; }
         .links-container { display: flex; flex-direction: column; gap: 1.5rem; }
-        .download-card { background: #f8fafc; border-radius: 16px; padding: 1.2rem; border: 1px solid #e2e8f0; transition: all 0.2s; }
-        .download-card:hover { background: #f1f5f9; transform: translateX(5px); }
+        .download-card { background: #f8fafc; border-radius: 16px; padding: 1.2rem; border: 1px solid #e2e8f0; }
         .download-card h4 { color: #0f172a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; }
         .download-card p { color: #475569; font-size: 0.85rem; margin-bottom: 1rem; }
-        .download-link { display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: background 0.2s; }
+        .download-link { display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
         .download-link:hover { background: #059669; }
         .info-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 12px; margin-top: 1rem; }
-        .info-box i { color: #f59e0b; margin-right: 8px; }
         .resumo-checkbox-col { width: 40px; text-align: center; background: #f8fafc; }
         .resumo-checkbox-col input { transform: scale(1.1); cursor: pointer; }
         .delete-selected-btn { background: #dc2626; color: white; }
-        .delete-selected-btn:hover { background: #b91c1c; }
-        .th-manutencao { background: #9ca3af !important; color: #1f2937; }
-        .th-alimentacao { background: #fff3cd !important; color: #856404; }
-        .th-repasse { background: #edd5be !important; color: #5a3e1b; }
         .cloud-badge { background: #10b981; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 20px; margin-left: 8px; }
         .method-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
         .method-tab { padding: 0.5rem 1rem; background: none; border: none; cursor: pointer; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; }
@@ -166,16 +106,15 @@
         .loading { text-align: center; padding: 3rem; color: #2f80ed; }
         .badge { background: #e6f4ff; padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.75rem; }
         .action-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .search-info { font-size: 0.7rem; color: #64748b; margin-top: 0.3rem; }
         
         @media print {
             body { background: white; }
             .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container { display: none !important; }
             .card { box-shadow: none; border: none; padding: 0; }
             .table-wrapper { overflow: visible; }
-            table { font-size: 9pt; border-collapse: collapse; width: 100%; }
+            table { font-size: 9pt; }
             th, td { border: 1px solid #000; padding: 4px; }
-            .valor-monetario { text-align: right; }
-            .resumo-checkbox-col { display: none; }
         }
     </style>
 </head>
@@ -207,96 +146,63 @@
                     <div class="search-with-button">
                         <div class="form-group">
                             <label>🔍 PESQUISAR (NTE, Município, Código SEC, Código INEP ou Unidade Escolar)</label>
-                            <input type="text" id="searchValue" placeholder="Digite NTE, Município, Código SEC, Código INEP ou nome da escola..." autocomplete="off">
+                            <input type="text" id="searchValue" placeholder="Digite para filtrar em tempo real..." autocomplete="off">
+                            <div class="search-info"><i class="fas fa-clock"></i> O filtro é automático - comece a digitar!</div>
                         </div>
                         <button class="btn-success" id="loadDataBtn"><i class="fas fa-download"></i> Carregar Dados</button>
                         <button class="btn-primary" id="exportToGerarBtn"><i class="fas fa-arrow-right"></i> Enviar Selecionados</button>
                     </div>
                 </div>
                 
-                <!-- ÁREA DE UPLOAD/COLA -->
                 <div class="file-upload-area">
                     <div class="method-tabs">
                         <button class="method-tab active" data-method="paste"><i class="fas fa-keyboard"></i> Colar Dados</button>
                         <button class="method-tab" data-method="upload"><i class="fas fa-upload"></i> Upload de Arquivo</button>
                     </div>
                     
-                    <!-- Método 1: Colar dados -->
                     <div id="pasteMethod" class="method-content active">
                         <div class="upload-type-selector">
-                            <div class="type-option" data-tipo="NTE">
-                                <i class="fas fa-map-marker-alt"></i> Lista de NTE
-                            </div>
-                            <div class="type-option" data-tipo="MUNICIPIO">
-                                <i class="fas fa-city"></i> Lista de Municípios
-                            </div>
-                            <div class="type-option active" data-tipo="CODIGO">
-                                <i class="fas fa-barcode"></i> Lista de Códigos SEC
-                            </div>
+                            <div class="type-option" data-tipo="NTE"><i class="fas fa-map-marker-alt"></i> Lista de NTE</div>
+                            <div class="type-option" data-tipo="MUNICIPIO"><i class="fas fa-city"></i> Lista de Municípios</div>
+                            <div class="type-option active" data-tipo="CODIGO"><i class="fas fa-barcode"></i> Lista de Códigos SEC</div>
                         </div>
-                        
                         <div class="paste-area">
-                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
-                                <i class="fas fa-paste"></i> Cole os dados abaixo (um por linha):
-                            </label>
-                            <textarea id="pasteData" rows="5" placeholder="Exemplo:
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;"><i class="fas fa-paste"></i> Cole os dados (um por linha):</label>
+                            <textarea id="pasteData" rows="4" placeholder="Exemplo:
 1ª CRE
 2ª CRE
-3ª CRE
 
 ou
 
 PORTO ALEGRE
-CAXIAS DO SUL
-PELOTAS
+SALVADOR
 
 ou
 
 12345
-67890
-11122"></textarea>
-                            <div class="paste-example">
-                                <i class="fas fa-lightbulb"></i> <strong>Dica:</strong> Você pode copiar de qualquer lugar (Excel, Word, Email) e colar aqui. Separe cada item em uma nova linha.
-                            </div>
+67890"></textarea>
                         </div>
-                        
-                        <button class="btn-primary" id="processarPasteBtn" style="width: 100%;">
-                            <i class="fas fa-play"></i> Identificar e Selecionar Escolas
-                        </button>
+                        <button class="btn-primary" id="processarPasteBtn" style="width: 100%;"><i class="fas fa-play"></i> Identificar e Selecionar</button>
                     </div>
                     
-                    <!-- Método 2: Upload de arquivo -->
                     <div id="uploadMethod" class="method-content">
                         <div class="upload-type-selector">
-                            <div class="type-option" data-tipo-upload="NTE">
-                                <i class="fas fa-map-marker-alt"></i> Lista de NTE
-                            </div>
-                            <div class="type-option" data-tipo-upload="MUNICIPIO">
-                                <i class="fas fa-city"></i> Lista de Municípios
-                            </div>
-                            <div class="type-option active" data-tipo-upload="CODIGO">
-                                <i class="fas fa-barcode"></i> Lista de Códigos SEC
-                            </div>
+                            <div class="type-option" data-tipo-upload="NTE"><i class="fas fa-map-marker-alt"></i> Lista de NTE</div>
+                            <div class="type-option" data-tipo-upload="MUNICIPIO"><i class="fas fa-city"></i> Lista de Municípios</div>
+                            <div class="type-option active" data-tipo-upload="CODIGO"><i class="fas fa-barcode"></i> Lista de Códigos SEC</div>
                         </div>
-                        
                         <div style="text-align: center; padding: 1rem;">
                             <i class="fas fa-file-excel" style="font-size: 3rem; color: #10b981;"></i>
-                            <button class="btn-secondary" id="uploadListaBtn" style="margin: 1rem 0;">
-                                <i class="fas fa-folder-open"></i> Selecionar Arquivo
-                            </button>
+                            <button class="btn-secondary" id="uploadListaBtn" style="margin: 1rem 0;"><i class="fas fa-folder-open"></i> Selecionar Arquivo</button>
                             <input type="file" id="listaFile" accept=".xlsx, .xls, .csv" style="display: none;">
                             <div id="fileNameDisplay" style="color: #64748b; font-size: 0.8rem;">Nenhum arquivo selecionado</div>
-                            <div class="upload-help">
-                                <i class="fas fa-info-circle"></i> 
-                                <strong>Formato esperado:</strong> Arquivo Excel (.xlsx, .xls) ou CSV com os valores na <strong>Coluna A</strong>.
-                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="info-message">
                     <i class="fas fa-info-circle"></i> 
-                    <strong>Funcionalidades:</strong> Digite no campo de busca para filtrar | Cole ou faça upload de uma lista para selecionar múltiplas escolas | Use "Enviar Selecionados" para levar à aba Gerar Valor
+                    <strong>Funcionalidades:</strong> O filtro é automático enquanto você digita | Cole ou faça upload de uma lista para selecionar múltiplas escolas
                 </div>
             </div>
             <div class="card">
@@ -311,15 +217,15 @@ ou
         <div id="gerarTab" style="display: none;">
             <div class="valor-cards-container">
                 <div class="valor-card faed-card">
-                    <div class="card-label"><i class="fas fa-tools" style="color: #2f80ed;"></i> FAED MANUTENÇÃO (Total)</div>
+                    <div class="card-label"><i class="fas fa-tools"></i> FAED MANUTENÇÃO (Total)</div>
                     <div class="card-value" id="cardTotalFaed">R$ 0,00</div>
                 </div>
                 <div class="valor-card alim-card">
-                    <div class="card-label"><i class="fas fa-utensils" style="color: #10b981;"></i> ALIMENTAÇÃO (Total)</div>
+                    <div class="card-label"><i class="fas fa-utensils"></i> ALIMENTAÇÃO (Total)</div>
                     <div class="card-value" id="cardTotalAlimentacao">R$ 0,00</div>
                 </div>
                 <div class="valor-card soma-card">
-                    <div class="card-label"><i class="fas fa-chart-line" style="color: #8b5cf6;"></i> TOTAL GERAL (FAED + ALIM)</div>
+                    <div class="card-label"><i class="fas fa-chart-line"></i> TOTAL GERAL</div>
                     <div class="card-value" id="cardTotalGeral">R$ 0,00</div>
                 </div>
             </div>
@@ -327,9 +233,9 @@ ou
                 <button class="btn-primary" id="buscarFaedBtn"><i class="fas fa-chart-line"></i> Buscar FAED</button>
                 <button class="btn-success" id="buscarAlimentacaoBtn"><i class="fas fa-utensils"></i> Buscar Alimentação</button>
                 <button class="btn-purple" id="salvarListaBtn"><i class="fas fa-save"></i> Salvar Lista</button>
-                <button class="btn-warning" id="enviarResumoBtn"><i class="fas fa-chart-bar"></i> Enviar para Resumo</button>
-                <button class="btn-secondary" id="exportGerarPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-                <button class="btn-secondary" id="exportGerarExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                <button class="btn-warning" id="enviarResumoBtn"><i class="fas fa-chart-bar"></i> Enviar Resumo</button>
+                <button class="btn-secondary" id="exportGerarPDFBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn-secondary" id="exportGerarExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
                 <button class="btn-danger" id="limparGerarBtn"><i class="fas fa-trash"></i> Limpar</button>
             </div>
             <div class="card">
@@ -340,37 +246,33 @@ ou
 
         <div id="relatorioTab" style="display: none;">
             <div class="report-actions">
-                <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-                <button class="btn-success" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
-                <button class="btn-info" id="salvarHistoricoBtn"><i class="fas fa-save"></i> Salvar Nota no Histórico</button>
-                <button class="btn-danger delete-selected-btn" id="deleteSelectedResumoBtn"><i class="fas fa-trash-alt"></i> Excluir Selecionados</button>
+                <button class="btn-primary" id="exportPDFBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn-success" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
+                <button class="btn-info" id="salvarHistoricoBtn"><i class="fas fa-save"></i> Salvar Nota</button>
+                <button class="btn-danger" id="deleteSelectedResumoBtn"><i class="fas fa-trash-alt"></i> Excluir Selecionados</button>
                 <button class="btn-danger" id="limparResumoBtn"><i class="fas fa-trash"></i> Limpar Tudo</button>
             </div>
             <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-chart-bar"></i> Resumo Consolidado</h3>
-                    <div>
-                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" id="selectAllResumoCheckbox"> Selecionar Todos
-                        </label>
-                    </div>
+                    <label style="font-size: 0.8rem;"><input type="checkbox" id="selectAllResumoCheckbox"> Selecionar Todos</label>
                 </div>
-                <div id="resumoConsolidado"><div class="empty-state"><p>Adicione dados ao resumo clicando em "Enviar para Resumo"</p></div></div>
+                <div id="resumoConsolidado"><div class="empty-state"><p>Adicione dados ao resumo</p></div></div>
             </div>
         </div>
 
         <div id="historicoTab" style="display: none;">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-file-alt"></i> Notas Técnicas Salvas <span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span></h3>
-                    <button class="btn-danger btn-small" id="limparHistoricoBtn"><i class="fas fa-trash"></i> Limpar Todas Notas</button>
+                    <h3><i class="fas fa-file-alt"></i> Notas Técnicas <span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span></h3>
+                    <button class="btn-danger btn-small" id="limparHistoricoBtn"><i class="fas fa-trash"></i> Limpar</button>
                 </div>
                 <div id="historicoNotasContainer"><div class="empty-state"><p>📭 Nenhuma nota salva</p></div></div>
             </div>
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-list"></i> Listas de Escolas Salvas</h3>
-                    <button class="btn-purple btn-small" id="exportarListasBtn"><i class="fas fa-file-excel"></i> Exportar Listas</button>
+                    <h3><i class="fas fa-list"></i> Listas Salvas</h3>
+                    <button class="btn-purple btn-small" id="exportarListasBtn"><i class="fas fa-file-excel"></i> Exportar</button>
                 </div>
                 <div id="listasSalvasContainer"><div class="empty-state"><p>📭 Nenhuma lista salva</p></div></div>
             </div>
@@ -381,14 +283,9 @@ ou
                 <div class="card-header"><h3><i class="fas fa-link"></i> Links Úteis</h3></div>
                 <div class="links-container">
                     <div class="download-card">
-                        <h4><i class="fas fa-file-excel" style="color: #2f80ed;"></i> Lista de Escolas para Tratamento</h4>
-                        <p>Planilha com a lista completa de escolas para validação e tratamento de dados.</p>
-                        <a href="#" class="download-link"><i class="fas fa-download"></i> Baixar Planilha</a>
-                    </div>
-                    <div class="download-card">
-                        <h4><i class="fas fa-chart-line" style="color: #10b981;"></i> Tratamento do Resumo</h4>
-                        <p>Planilha para consolidação e tratamento dos dados resumidos.</p>
-                        <a href="#" class="download-link"><i class="fas fa-download"></i> Baixar Planilha</a>
+                        <h4><i class="fas fa-file-excel"></i> Planilha de Tratamento</h4>
+                        <p>Baixe a planilha para tratamento dos dados.</p>
+                        <a href="#" class="download-link"><i class="fas fa-download"></i> Download</a>
                     </div>
                 </div>
             </div>
@@ -396,11 +293,12 @@ ou
     </div>
 
     <script>
+        // ============================================
         // CONFIGURAÇÃO
+        // ============================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCeJT12TYgeJn7TzDPSUwLHnRvyUqfR7SxwY0rERbTPYyjtvZDdKxOBmGdNHeDj0d0/exec';
         
-        const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
-        document.getElementById('userNameDisplay').textContent = usuarioNome;
+        document.getElementById('userNameDisplay').textContent = sessionStorage.getItem('usuarioNome') || 'Usuário';
         
         document.getElementById('logoutBtn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -411,38 +309,20 @@ ou
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
         
-        const FAED_CONFIG = {
-            2023: { sheetName: 'BBPag2023', codigoCol: 'C', valorCol: 'E' },
-            2024: { sheetName: 'BBPag2024', codigoCol: 'C', valorCol: 'E' },
-            2025: { sheetName: 'BBPag2025', codigoCol: 'C', valorCol: 'E' },
-            2026: { sheetName: 'geradorManut2026', codigoCol: 'C', valorCol: 'E' }
-        };
-        
-        const ALIMENTACAO_CONFIG = {
-            2023: { sheetName: 'Dados_2023', codigoCol: 'C', federalCol: 'F', estadualCol: 'H' },
-            2024: { sheetName: 'Dados_2024', codigoCol: 'C', federalCol: 'F', estadualCol: 'H' },
-            2025: { sheetName: 'Dados_2025', codigoCol: 'C', federalCol: 'F', estadualCol: 'H' },
-            2026: {
-                federal: { sheetName: 'geradorPnae2026', codigoCol: 'C', valorCol: 'E' },
-                estadual: { sheetName: 'geradorFaed2026', codigoCol: 'C', valorCol: 'E' }
-            }
-        };
-        
         let escolasData = [];
+        let escolasFiltradas = [];
         let escolasSelecionadas = [];
         let valoresFAED = { 2023: {}, 2024: {}, 2025: {}, 2026: {} };
         let valoresAlimentacao = { 2023: { federal: {}, estadual: {} }, 2024: { federal: {}, estadual: {} }, 2025: { federal: {}, estadual: {} }, 2026: { federal: {}, estadual: {} } };
         let resumoDados = [];
-        let tipoBuscaAtual = '';
-        let valorBuscaAtual = '';
-        let municipioExatoAtual = '';
         let nextId = 1;
         let listasSalvas = [];
         let historicoNotas = [];
         let uploadTipo = 'CODIGO';
+        let filtroTimeout = null;
         
         // ============================================
-        // FUNÇÕES PRINCIPAIS
+        // FUNÇÕES AUXILIARES
         // ============================================
         
         function formatarValorBR(valor) {
@@ -494,15 +374,59 @@ ou
             return dados;
         }
         
+        // ============================================
+        // FILTRO AUTOMÁTICO - CORRIGIDO!
+        // ============================================
+        
+        function aplicarFiltro() {
+            const termo = document.getElementById('searchValue').value.trim();
+            
+            if (termo === '') {
+                escolasFiltradas = [...escolasData];
+            } else {
+                const termoLower = termo.toLowerCase();
+                const termoNormalizado = normalizarTexto(termo);
+                
+                escolasFiltradas = escolasData.filter(escola => {
+                    // Busca em NTE
+                    if (escola.nte && escola.nte.toLowerCase().includes(termoLower)) return true;
+                    // Busca em Município
+                    if (escola.municipio && escola.municipio.toLowerCase().includes(termoLower)) return true;
+                    // Busca em Código SEC
+                    if (escola.codigoSec && escola.codigoSec.toLowerCase().includes(termoLower)) return true;
+                    // Busca em Código INEP
+                    if (escola.codigoInep && escola.codigoInep.toLowerCase().includes(termoLower)) return true;
+                    // Busca em Unidade Escolar
+                    if (escola.unidadeEscolar && escola.unidadeEscolar.toLowerCase().includes(termoLower)) return true;
+                    return false;
+                });
+            }
+            
+            mostrarResultados(escolasFiltradas);
+        }
+        
+        function debounceFiltro() {
+            if (filtroTimeout) clearTimeout(filtroTimeout);
+            filtroTimeout = setTimeout(() => {
+                aplicarFiltro();
+            }, 300);
+        }
+        
+        // ============================================
+        // CARREGAR DADOS
+        // ============================================
+        
         async function carregarDadosPlanilha() {
             const container = document.getElementById('resultsTable');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando escolas...</div>';
+            
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
                 const response = await fetch(url);
                 const csvText = await response.text();
                 escolasData = parseCSV(csvText);
-                mostrarResultados(escolasData);
+                escolasFiltradas = [...escolasData];
+                mostrarResultados(escolasFiltradas);
                 document.getElementById('resultCount').innerHTML = escolasData.length + ' registros';
                 alert(`✅ ${escolasData.length} escolas carregadas com sucesso!`);
             } catch (error) {
@@ -510,6 +434,10 @@ ou
                 console.error(error);
             }
         }
+        
+        // ============================================
+        // MOSTRAR RESULTADOS
+        // ============================================
         
         function mostrarResultados(resultados) {
             const container = document.getElementById('resultsTable');
@@ -520,19 +448,14 @@ ou
                 return;
             }
             
-            let html = '<div class="table-wrapper">';
-            html += '<table>';
-            html += '<thead>';
-            html += '<tr>';
+            let html = '<div class="table-wrapper"><table><thead><tr>';
             html += '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>';
             html += '<th>NTE</th>';
             html += '<th>Município</th>';
             html += '<th>Código SEC</th>';
             html += '<th>Código INEP</th>';
             html += '<th>Unidade Escolar</th>';
-            html += '</tr>';
-            html += '</thead>';
-            html += '<tbody>';
+            html += '</tr></thead><tbody>';
             
             for (const escola of resultados) {
                 const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
@@ -546,12 +469,10 @@ ou
                 html += `</tr>`;
             }
             
-            html += '</tbody>';
-            html += '</table>';
-            html += '</div>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
             
-            // Adicionar eventos aos checkboxes
+            // Eventos dos checkboxes
             document.querySelectorAll('.school-checkbox').forEach(cb => {
                 cb.addEventListener('change', function() {
                     const codigo = this.dataset.codigo;
@@ -564,7 +485,6 @@ ou
                     renderGerarTabela();
                     atualizarCardsGerarValor();
                     
-                    // Atualizar estilo da linha
                     const row = this.closest('tr');
                     if (this.checked) row.classList.add('selected-row');
                     else row.classList.remove('selected-row');
@@ -609,6 +529,10 @@ ou
             });
         }
         
+        // ============================================
+        // GERAR VALOR
+        // ============================================
+        
         function renderGerarTabela() {
             const container = document.getElementById('gerarTabela');
             document.getElementById('gerarCount').innerHTML = escolasSelecionadas.length + ' escolas';
@@ -618,8 +542,8 @@ ou
                 return;
             }
             
-            let html = '<div class="table-wrapper"><table>';
-            html += '<thead><tr style="background: #9ca3af;"><th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
+            let html = '<div class="table-wrapper"><table><thead>';
+            html += '<tr style="background: #9ca3af;"><th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th>';
             html += '<th colspan="4">FAED</th><th colspan="8">ALIMENTAÇÃO</th></tr>';
             html += '<tr style="background: #6b7280;"><th></th><th></th><th></th><th></th><th></th>';
             html += '<th>2023</th><th>2024</th><th>2025</th><th>2026</th>';
@@ -675,6 +599,18 @@ ou
             document.getElementById('linksTab').style.display = 'none';
         }
         
+        function limparGerar() {
+            escolasSelecionadas = [];
+            renderGerarTabela();
+            atualizarCardsGerarValor();
+            atualizarCheckboxesConsulta();
+            alert('✅ Lista limpa!');
+        }
+        
+        // ============================================
+        // PROCESSAR LISTAS (COLA E UPLOAD)
+        // ============================================
+        
         function getTipoDisplay() {
             const tipos = { 'NTE': 'NTE', 'MUNICIPIO': 'Município', 'CODIGO': 'Código SEC' };
             return tipos[uploadTipo] || 'item';
@@ -687,7 +623,7 @@ ou
             }
             
             if (escolasData.length === 0) {
-                alert('⚠️ Lista de escolas não carregada. Clique em "Carregar Dados" primeiro.');
+                alert('⚠️ Carregue os dados primeiro!');
                 return false;
             }
             
@@ -730,7 +666,7 @@ ou
             }
             
             if (encontradasUnicas.length === 0) {
-                alert(`⚠️ Nenhuma escola encontrada com os ${valores.length} ${getTipoDisplay()} informados.`);
+                alert(`⚠️ Nenhuma escola encontrada!`);
                 return false;
             }
             
@@ -740,15 +676,17 @@ ou
             atualizarCheckboxesConsulta();
             
             const tipoDisplay = getTipoDisplay();
-            let mensagem = `✅ ${encontradasUnicas.length} escola(s) selecionada(s) com base ${encontradasUnicas.length === 1 ? `no ${tipoDisplay}` : `nos ${tipoDisplay}s`}:\n\n📊 ${valores.length} ${tipoDisplay}(s) processado(s)\n✅ ${encontradasUnicas.length} escola(s) encontrada(s)`;
+            let mensagem = `✅ ${encontradasUnicas.length} escola(s) selecionada(s)!`;
+            mensagem += `\n📊 ${valores.length} ${tipoDisplay}(s) processado(s)`;
+            mensagem += `\n✅ ${encontradasUnicas.length} escola(s) encontrada(s)`;
             
             if (naoEncontrados.length > 0) {
-                mensagem += `\n⚠️ ${naoEncontrados.length} não encontrado(s): ${naoEncontrados.slice(0, 5).join(', ')}${naoEncontrados.length > 5 ? '...' : ''}`;
+                mensagem += `\n⚠️ ${naoEncontrados.length} não encontrado(s)`;
             }
             
             alert(mensagem);
             
-            if (confirm(`Deseja ir para a aba "Gerar Valor" para visualizar as ${encontradasUnicas.length} escolas selecionadas?`)) {
+            if (confirm(`Ir para a aba "Gerar Valor"?`)) {
                 document.querySelector('.tab[data-tab="gerar"]').click();
             }
             
@@ -756,11 +694,9 @@ ou
         }
         
         function processarPaste() {
-            const textarea = document.getElementById('pasteData');
-            const texto = textarea.value;
-            
+            const texto = document.getElementById('pasteData').value;
             if (!texto || texto.trim() === '') {
-                alert('⚠️ Cole os dados na caixa de texto primeiro!');
+                alert('⚠️ Cole os dados na caixa de texto!');
                 return;
             }
             
@@ -775,7 +711,7 @@ ou
             }
             
             if (valores.length === 0) {
-                alert('⚠️ Nenhum dado válido encontrado!');
+                alert('⚠️ Nenhum dado válido!');
                 return;
             }
             
@@ -827,47 +763,36 @@ ou
             reader.readAsArrayBuffer(file);
         }
         
-        // Funções placeholder para outras funcionalidades
-        async function buscarFAED() { alert('Funcionalidade FAED será implementada em breve.'); }
-        async function buscarAlimentacao() { alert('Funcionalidade Alimentação será implementada em breve.'); }
-        function salvarListaEscolas() { alert('Funcionalidade Salvar Lista será implementada em breve.'); }
-        function enviarParaResumo() { alert('Funcionalidade Resumo será implementada em breve.'); }
-        function limparGerar() { resetarGerarValor(); alert('Lista limpa!'); }
+        // ============================================
+        // FUNÇÕES PLACEHOLDER
+        // ============================================
+        
+        async function buscarFAED() { alert('Funcionalidade em desenvolvimento'); }
+        async function buscarAlimentacao() { alert('Funcionalidade em desenvolvimento'); }
+        function salvarListaEscolas() { alert('Funcionalidade em desenvolvimento'); }
+        function enviarParaResumo() { alert('Funcionalidade em desenvolvimento'); }
         function limparResumo() { resumoDados = []; renderResumoConsolidado(); alert('Resumo limpo!'); }
-        function resetarGerarValor() { escolasSelecionadas = []; renderGerarTabela(); atualizarCardsGerarValor(); atualizarCheckboxesConsulta(); }
-        function renderResumoConsolidado() { const container = document.getElementById('resumoConsolidado'); container.innerHTML = '<div class="empty-state"><p>Resumo vazio</p></div>'; }
+        function renderResumoConsolidado() { 
+            const container = document.getElementById('resumoConsolidado'); 
+            container.innerHTML = '<div class="empty-state"><p>Resumo vazio</p></div>'; 
+        }
         function excluirResumoSelecionados() { alert('Selecione itens para excluir'); }
-        function exportResumoPDF() { alert('Exportação PDF em breve'); }
-        function exportResumoExcel() { alert('Exportação Excel em breve'); }
-        function exportGerarPDF() { alert('Exportação PDF em breve'); }
-        function exportGerarExcel() { alert('Exportação Excel em breve'); }
-        function salvarNotaHistorico() { alert('Salvar nota em breve'); }
-        function limparHistoricoNotas() { alert('Limpar histórico em breve'); }
-        function exportarListasExcel() { alert('Exportar listas em breve'); }
+        function exportResumoPDF() { alert('Exportação PDF'); }
+        function exportResumoExcel() { alert('Exportação Excel'); }
+        function exportGerarPDF() { alert('Exportação PDF'); }
+        function exportGerarExcel() { alert('Exportação Excel'); }
+        function salvarNotaHistorico() { alert('Salvar nota'); }
+        function limparHistoricoNotas() { alert('Limpar histórico'); }
+        function exportarListasExcel() { alert('Exportar listas'); }
         function carregarNotasCloud() { }
         function carregarListasSalvas() { }
         function renderizarHistoricoNotas() { }
         function renderizarListasSalvas() { }
         
-        // Auto filtro
-        document.getElementById('searchValue').addEventListener('input', function() {
-            if (escolasData.length === 0) return;
-            const termo = this.value.trim().toLowerCase();
-            if (termo === '') {
-                mostrarResultados(escolasData);
-            } else {
-                const filtrados = escolasData.filter(escola => 
-                    (escola.nte && escola.nte.toLowerCase().includes(termo)) ||
-                    (escola.municipio && escola.municipio.toLowerCase().includes(termo)) ||
-                    (escola.codigoSec && escola.codigoSec.toLowerCase().includes(termo)) ||
-                    (escola.codigoInep && escola.codigoInep.toLowerCase().includes(termo)) ||
-                    (escola.unidadeEscolar && escola.unidadeEscolar.toLowerCase().includes(termo))
-                );
-                mostrarResultados(filtrados);
-            }
-        });
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         
-        // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
@@ -887,6 +812,10 @@ ou
         document.getElementById('processarPasteBtn').onclick = processarPaste;
         document.getElementById('uploadListaBtn').onclick = () => document.getElementById('listaFile').click();
         document.getElementById('listaFile').onchange = (e) => { if (e.target.files.length > 0) processarUploadLista(e.target.files[0]); };
+        
+        // FILTRO AUTOMÁTICO - CORRIGIDO!
+        document.getElementById('searchValue').addEventListener('input', debounceFiltro);
+        document.getElementById('searchValue').addEventListener('keyup', debounceFiltro);
         
         // Seletores de método
         document.querySelectorAll('.method-tab').forEach(tab => {
