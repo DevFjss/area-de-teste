@@ -2,6 +2,15 @@
 <html lang="pt-BR">
 <head>
    
+ <script>
+        // Verifica se o usuário está logado
+        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            // Redireciona para o login
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        }
+    </script>
+   
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Técnica · CDF - Sistema Integrado</title>
@@ -272,6 +281,17 @@
                         <p>Planilha para consolidação e tratamento dos dados resumidos.</p>
                         <a href="https://github.com/DevFjss/ImportarPlanilha/raw/refs/heads/main/Tratamento%20do%20resumo.xlsm" class="download-link" target="_blank" download><i class="fas fa-download"></i> Baixar Planilha</a>
                     </div>
+
+                     <div class="download-card">
+                        <h4><i class="fas fa-chart-line" style="color: #10b981;"></i> Verificar atualização dados geradores</h4>
+                        <p>Verifica se houve atualização dados geradores na  - WEB.</p>
+                        <a href="https://docs.google.com/spreadsheets/d/1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k/edit?gid=1739651089#gid=1739651089" class="download-link" target="_blank" download>
+                            <i class="fas fa-download"></i> Verificar Atualização
+                        </a>
+                    </div>
+                  
+
+                   
                     <div class="info-box"><i class="fas fa-info-circle"></i><strong>Informação:</strong> Baixe as planilhas acima para concluir a formatação da nota técnica.</div>
                 </div>
             </div>
