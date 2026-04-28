@@ -696,23 +696,31 @@
        function autoFiltro() {
     if (escolasData.length === 0) return;
     const termo = document.getElementById('searchValue').value.trim();
+    const buscaNTEExata = document.getElementById('buscaNTEExata')?.checked || false;
     let resultados;
+    
     if (termo === '') {
         resultados = escolasData;
     } else {
-        const termoLimpo = termo.trim();
+        const termoNumero = parseInt(termo, 10);
+        const isNumeroValido = !isNaN(termoNumero) && termoNumero >= 1 && termoNumero <= 27;
         
         resultados = escolasData.filter(escola => {
-            // Limpar caracteres indesejados do NTE
-            const nteLimpo = String(escola.nte || '').replace(/["']/g, '').trim();
+            // Se o checkbox está marcado e o termo é número válido
+            if (buscaNTEExata && isNumeroValido) {
+                const nteNumero = parseInt(escola.nte, 10);
+                return nteNumero === termoNumero;
+            }
             
-            return nteLimpo === termoLimpo ||
-                   String(escola.municipio || '').toLowerCase().includes(termoLimpo.toLowerCase()) ||
-                   String(escola.codigoSec || '').includes(termoLimpo) ||
-                   String(escola.codigoInep || '').includes(termoLimpo) ||
-                   String(escola.unidadeEscolar || '').toLowerCase().includes(termoLimpo.toLowerCase());
+            // Busca normal (contém em qualquer lugar)
+            return normalizarTexto(escola.nte).includes(normalizarTexto(termo)) ||
+                   normalizarTexto(escola.municipio).includes(normalizarTexto(termo)) ||
+                   normalizarTexto(escola.codigoSec).includes(normalizarTexto(termo)) ||
+                   normalizarTexto(escola.codigoInep).includes(normalizarTexto(termo)) ||
+                   normalizarTexto(escola.unidadeEscolar).includes(normalizarTexto(termo));
         });
     }
+    
     mostrarResultados(resultados);
 }
         
