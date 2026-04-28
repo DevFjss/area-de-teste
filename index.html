@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-   
- 
-   
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Técnica · CDF - Sistema Integrado</title>
@@ -33,6 +30,8 @@
         .form-group { flex: 2; min-width: 300px; }
         .form-group label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #5c7b9c; margin-bottom: 0.3rem; }
         .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; }
+        .checkbox-nte { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 12px; }
+        .checkbox-nte label { font-size: 0.8rem; cursor: pointer; }
         .multiline-group { width: 100%; margin-top: 1rem; }
         .multiline-group label { display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #5c7b9c; margin-bottom: 0.3rem; }
         .multiline-group textarea { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; font-family: monospace; resize: vertical; min-height: 100px; }
@@ -147,13 +146,18 @@
                             <label>🔍 PESQUISA RÁPIDA (NTE, Município, Código SEC, Código INEP ou Unidade Escolar)</label>
                             <input type="text" id="searchValue" placeholder="Digite NTE, Município, Código SEC, Código INEP ou nome da escola..." autocomplete="off">
                         </div>
+                        <div class="checkbox-nte">
+                            <input type="checkbox" id="buscaNTEExata">
+                            <label for="buscaNTEExata">🔢 Buscar apenas NTE (número exato de 1 a 27)</label>
+                        </div>
                         <button class="btn-success" id="loadDataBtn"><i class="fas fa-download"></i> Carregar Dados</button>
                         <button class="btn-primary" id="exportToGerarBtn"><i class="fas fa-arrow-right"></i> Enviar Selecionados</button>
                     </div>
                 </div>
                 <div class="info-message" style="margin-top: 1rem;">
                     <i class="fas fa-info-circle"></i> 
-                    <strong>Busca rápida:</strong> Digite na caixa acima para filtrar instantaneamente a lista
+                    <strong>Busca rápida:</strong> Digite na caixa acima para filtrar instantaneamente a lista. 
+                    <strong style="color:#10b981;">✓ Marque o checkbox para buscar APENAS por NTE (número exato)!</strong>
                 </div>
             </div>
 
@@ -274,17 +278,11 @@
                         <p>Planilha para consolidação e tratamento dos dados resumidos.</p>
                         <a href="https://github.com/DevFjss/ImportarPlanilha/raw/refs/heads/main/Tratamento%20do%20resumo.xlsm" class="download-link" target="_blank" download><i class="fas fa-download"></i> Baixar Planilha</a>
                     </div>
-
-                     <div class="download-card">
+                    <div class="download-card">
                         <h4><i class="fas fa-chart-line" style="color: #10b981;"></i> Verificar atualização dados geradores</h4>
-                        <p>Verifica se houve atualização dados geradores na  - WEB.</p>
-                        <a href="https://docs.google.com/spreadsheets/d/1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k/edit?gid=1739651089#gid=1739651089" class="download-link" target="_blank" download>
-                            <i class="fas fa-download"></i> Verificar Atualização
-                        </a>
+                        <p>Verifica se houve atualização dados geradores na WEB.</p>
+                        <a href="https://docs.google.com/spreadsheets/d/1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k/edit?gid=1739651089#gid=1739651089" class="download-link" target="_blank"><i class="fas fa-external-link-alt"></i> Verificar Atualização</a>
                     </div>
-                  
-
-                   
                     <div class="info-box"><i class="fas fa-info-circle"></i><strong>Informação:</strong> Baixe as planilhas acima para concluir a formatação da nota técnica.</div>
                 </div>
             </div>
@@ -292,6 +290,12 @@
     </div>
 
     <script>
+        // Verifica se o usuário está logado
+        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
+        }
+
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCeJT12TYgeJn7TzDPSUwLHnRvyUqfR7SxwY0rERbTPYyjtvZDdKxOBmGdNHeDj0d0/exec';
         
         const usuarioNome = sessionStorage.getItem('usuarioNome') || 'Usuário';
@@ -629,12 +633,10 @@
                 valores = [rawInput.trim()];
             }
             
-            const valoresNormalizados = valores.map(v => normalizarTexto(v));
-            
             if (activeSelectionType === 'nte') {
                 currentIndividualValues = [];
                 for (const valor of valores) {
-                    const encontradas = escolasData.filter(e => e.nte === valor);
+                    const encontradas = escolasData.filter(e => String(e.nte).trim() === String(valor).trim());
                     if (encontradas.length > 0) {
                         for (const escola of encontradas) {
                             if (!escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec)) {
@@ -693,104 +695,106 @@
             }
         }
         
-       function autoFiltro() {
-    if (escolasData.length === 0) return;
-    const termo = document.getElementById('searchValue').value.trim();
-    const buscaNTEExata = document.getElementById('buscaNTEExata')?.checked || false;
-    let resultados;
-    
-    if (termo === '') {
-        resultados = escolasData;
-    } else {
-        const termoNumero = parseInt(termo, 10);
-        const isNumeroValido = !isNaN(termoNumero) && termoNumero >= 1 && termoNumero <= 27;
-        
-        resultados = escolasData.filter(escola => {
-            // Se o checkbox está marcado e o termo é número válido
-            if (buscaNTEExata && isNumeroValido) {
-                const nteNumero = parseInt(escola.nte, 10);
-                return nteNumero === termoNumero;
+        function autoFiltro() {
+            if (escolasData.length === 0) return;
+            const termo = document.getElementById('searchValue').value.trim();
+            const buscaNTEExata = document.getElementById('buscaNTEExata').checked;
+            let resultados;
+            
+            if (termo === '') {
+                resultados = escolasData;
+            } else {
+                const termoNumero = parseInt(termo, 10);
+                const isNumeroValido = !isNaN(termoNumero) && termoNumero >= 1 && termoNumero <= 27;
+                
+                resultados = escolasData.filter(escola => {
+                    // Se o checkbox está marcado e o termo é número válido -> busca EXATA no NTE
+                    if (buscaNTEExata && isNumeroValido) {
+                        const nteNumero = parseInt(escola.nte, 10);
+                        return nteNumero === termoNumero;
+                    }
+                    
+                    // Busca normal (contém em qualquer lugar) para todos os campos
+                    const nteStr = String(escola.nte || '').toLowerCase();
+                    const termoLower = termo.toLowerCase();
+                    
+                    return nteStr.includes(termoLower) ||
+                           normalizarTexto(escola.municipio).includes(normalizarTexto(termo)) ||
+                           String(escola.codigoSec || '').includes(termo) ||
+                           String(escola.codigoInep || '').includes(termo) ||
+                           normalizarTexto(escola.unidadeEscolar).includes(normalizarTexto(termo));
+                });
             }
             
-            // Busca normal (contém em qualquer lugar)
-            return normalizarTexto(escola.nte).includes(normalizarTexto(termo)) ||
-                   normalizarTexto(escola.municipio).includes(normalizarTexto(termo)) ||
-                   normalizarTexto(escola.codigoSec).includes(normalizarTexto(termo)) ||
-                   normalizarTexto(escola.codigoInep).includes(normalizarTexto(termo)) ||
-                   normalizarTexto(escola.unidadeEscolar).includes(normalizarTexto(termo));
-        });
-    }
-    
-    mostrarResultados(resultados);
-}
+            mostrarResultados(resultados);
+        }
         
-       function mostrarResultados(resultados) {
-    const container = document.getElementById('resultsTable');
-    document.getElementById('resultCount').innerHTML = resultados.length + ' registros';
-    
-    if (resultados.length === 0) { 
-        container.innerHTML = '<div class="empty-state"><p>Nenhum resultado</p></div>'; 
-        return; 
-    }
-    
-    let html = '<div class="table-wrapper"><table><thead><tr>' +
-        '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>' +
-        '<th>NTE</th>' +
-        '<th>Município</th>' +
-        '<th>Código SEC</th>' +
-        '<th>Código INEP</th>' +
-        '<th>Unidade Escolar</th>' +
-        '</tr></thead><tbody>';
-    
-    for (const escola of resultados) {
-        const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
-        html += `<tr class="${isSelected ? 'selected-row' : ''}">` +
-            `<td class="checkbox-col"><input type="checkbox" class="school-checkbox" data-codigo="${escola.codigoSec}" ${isSelected ? 'checked' : ''}></td>` +
-            `<td><strong>${escola.nte || '-'}</strong></td>` +  // ← NTE sendo exibido
-            `<td>${escola.municipio || '-'}</td>` +
-            `<td>${escola.codigoSec || '-'}</td>` +
-            `<td>${escola.codigoInep || '-'}</td>` +
-            `<td style="text-align:left">${escola.unidadeEscolar || '-'}</td>` +
-            `</tr>`;
-    }
-    
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-    
-    // Reaplicar eventos dos checkboxes
-    document.querySelectorAll('.school-checkbox').forEach(cb => {
-        cb.onchange = () => {
-            const codigo = cb.dataset.codigo;
-            const escola = escolasData.find(e => e.codigoSec === codigo);
-            if (cb.checked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) {
-                escolasSelecionadas.push(escola);
-            } else if (!cb.checked) {
-                escolasSelecionadas = escolasSelecionadas.filter(s => s.codigoSec !== codigo);
+        function mostrarResultados(resultados) {
+            const container = document.getElementById('resultsTable');
+            document.getElementById('resultCount').innerHTML = resultados.length + ' registros';
+            
+            if (resultados.length === 0) { 
+                container.innerHTML = '<div class="empty-state"><p>Nenhum resultado</p></div>'; 
+                return; 
             }
-            renderGerarTabela();
-            atualizarCardsGerarValor();
-        };
-    });
-    
-    const selectAll = document.getElementById('selectAllCheckbox');
-    if (selectAll) {
-        selectAll.onchange = (e) => {
-            const isChecked = e.target.checked;
+            
+            let html = '<div class="table-wrapper"><table><thead><tr>' +
+                '<th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>' +
+                '<th>NTE</th>' +
+                '<th>Município</th>' +
+                '<th>Código SEC</th>' +
+                '<th>Código INEP</th>' +
+                '<th>Unidade Escolar</th>' +
+                '</tr></thead><tbody>';
+            
+            for (const escola of resultados) {
+                const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
+                html += `<tr class="${isSelected ? 'selected-row' : ''}">` +
+                    `<td class="checkbox-col"><input type="checkbox" class="school-checkbox" data-codigo="${escola.codigoSec}" ${isSelected ? 'checked' : ''}></td>` +
+                    `<td><strong>${escola.nte || '-'}</strong></td>` +
+                    `<td>${escola.municipio || '-'}</td>` +
+                    `<td>${escola.codigoSec || '-'}</td>` +
+                    `<td>${escola.codigoInep || '-'}</td>` +
+                    `<td style="text-align:left">${escola.unidadeEscolar || '-'}</td>` +
+                    `</tr>`;
+            }
+            
+            html += '</tbody>}</div>';
+            container.innerHTML = html;
+            
             document.querySelectorAll('.school-checkbox').forEach(cb => {
-                cb.checked = isChecked;
-                const codigo = cb.dataset.codigo;
-                const escola = escolasData.find(e => e.codigoSec === codigo);
-                if (isChecked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) {
-                    escolasSelecionadas.push(escola);
-                } else if (!isChecked) {
-                    escolasSelecionadas = [];
-                }
+                cb.onchange = () => {
+                    const codigo = cb.dataset.codigo;
+                    const escola = escolasData.find(e => e.codigoSec === codigo);
+                    if (cb.checked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) {
+                        escolasSelecionadas.push(escola);
+                    } else if (!cb.checked) {
+                        escolasSelecionadas = escolasSelecionadas.filter(s => s.codigoSec !== codigo);
+                    }
+                    renderGerarTabela();
+                    atualizarCardsGerarValor();
+                };
             });
-            renderGerarTabela();
-            atualizarCardsGerarValor();
-        };
-    }
-}
+            
+            const selectAll = document.getElementById('selectAllCheckbox');
+            if (selectAll) {
+                selectAll.onchange = (e) => {
+                    const isChecked = e.target.checked;
+                    document.querySelectorAll('.school-checkbox').forEach(cb => {
+                        cb.checked = isChecked;
+                        const codigo = cb.dataset.codigo;
+                        const escola = escolasData.find(e => e.codigoSec === codigo);
+                        if (isChecked && !escolasSelecionadas.some(s => s.codigoSec === codigo)) {
+                            escolasSelecionadas.push(escola);
+                        } else if (!isChecked) {
+                            escolasSelecionadas = [];
+                        }
+                    });
+                    renderGerarTabela();
+                    atualizarCardsGerarValor();
+                };
+            }
+        }
         
         function exportarParaGerar() {
             if (escolasSelecionadas.length === 0) { alert('Selecione pelo menos uma escola'); return; }
@@ -815,7 +819,7 @@
                 for (let ano of [2023, 2024, 2025, 2026]) { html += `<td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].federal[escola.codigoSec] || 0)}</td><td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].estadual[escola.codigoSec] || 0)}</td>`; }
                 html += `</tr>`;
             }
-            html += '</tbody></table></div>';
+            html += '</tbody>}</div>';
             container.innerHTML = html;
         }
         
@@ -835,7 +839,7 @@
             
             for (const item of currentIndividualValues) {
                 const escolasDoGrupo = escolasSelecionadas.filter(escola => {
-                    if (item.type === 'nte') return escola.nte === item.value;
+                    if (item.type === 'nte') return String(escola.nte).trim() === String(item.value).trim();
                     if (item.type === 'municipio') return normalizarTexto(escola.municipio) === normalizarTexto(item.value);
                     if (item.type === 'codigo') return escola.codigoSec === item.value;
                     return false;
@@ -942,7 +946,7 @@
             html += `<tr class="total-row"><td style="text-align:left;"><strong>TOTAL</strong></td><td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2023])}</strong></td><td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2024])}</strong></td><td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2025])}</strong></td><td class="valor-monetario"><strong>${formatarValorBR(totalFAED[2026])}</strong></td>`;
             for (let ano of [2023, 2024, 2025, 2026]) { html += `<td class="valor-monetario"><strong>${formatarValorBR(totalAlimentacaoFederal[ano])}</strong></td><td class="valor-monetario"><strong>${formatarValorBR(totalAlimentacaoEstadual[ano])}</strong></td>`; }
             html += `<td class="resumo-checkbox-col"></td></tr>`;
-            html += `<tr class="total-geral"><td style="text-align:left;"><strong>TOTAL GERAL MANUTENÇÃO</strong></td><td colspan="12" class="valor-monetario"><strong>${formatarValorBR(totalGeralManutencao)}</strong></td><td class="resumo-checkbox-col"></td></td>`;
+            html += `<tr class="total-geral"><td style="text-align:left;"><strong>TOTAL GERAL MANUTENÇÃO</strong></td><td colspan="12" class="valor-monetario"><strong>${formatarValorBR(totalGeralManutencao)}</strong></td><td class="resumo-checkbox-col"></td></tr>`;
             html += `<tr class="total-geral"><td style="text-align:left;"><strong>TOTAL GERAL ALIMENTAÇÃO</strong></td><td colspan="12" class="valor-monetario"><strong>${formatarValorBR(totalGeralAlimentacao)}</strong></td><td class="resumo-checkbox-col"></td></tr>`;
             html += '</tbody>}</div>';
             container.innerHTML = html;
