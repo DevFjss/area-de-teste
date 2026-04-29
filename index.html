@@ -112,6 +112,8 @@
             .valor-monetario { text-align: right; }
             .resumo-checkbox-col { display: none; }
         }
+        .error-message { background: #fee2e2; border: 1px solid #ef4444; color: #dc2626; padding: 1rem; border-radius: 12px; margin-top: 1rem; text-align: center; }
+        .btn-retry { background: #ef4444; margin-top: 1rem; }
     </style>
 </head>
 <body>
@@ -179,13 +181,13 @@
                 </div>
                 <div class="info-message" style="margin-top: 1rem; background: #fef3c7;">
                     <i class="fas fa-lightbulb"></i> 
-                    <strong>Dica:</strong> Selecione NTE, Município ou Código SEC, depois digite os valores separados por vírgula, espaço ou quebra de linha. O sistema buscará TODAS as escolas correspondentes e as marcará automaticamente!
+                    <strong>Dica:</strong> Selecione NTE, Município ou Código SEC, depois digite os valores separados por vírgula, espaço ou quebra de linha.
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-table-list"></i> Lista de Escolas</h3><span class="badge" id="resultCount">0 registros</span></div>
-                <div id="resultsTable"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Carregando dados da planilha...</div></div>
+                <div id="resultsTable"><div class="empty-state"><i class="fas fa-cloud-download-alt" style="font-size: 3rem;"></i><p>Clique em "Carregar Dados" para exibir as escolas</p></div></div>
             </div>
         </div>
 
@@ -302,6 +304,14 @@
         
         const SPREADSHEET_ID = '1bxT0HKmzmwBCohuwRUCexV_scB828Mjmr8aGt0ulY1k';
         const SHEET_NAME = 'Escolas_ativas';
+        
+        // Dados de exemplo em caso de falha no carregamento
+        const DADOS_EXEMPLO = [
+            { nte: "1", municipio: "AMERICA DOURADA", codigoSec: "1125747", codigoInep: "29057809", unidadeEscolar: "COLEGIO ESTADUAL SAO SEBASTIAO" },
+            { nte: "1", municipio: "AMERICA DOURADA", codigoSec: "1179795", codigoInep: "29488974", unidadeEscolar: "COLEGIO EST DO CAMPO DE TEMPO INTEGRAL" },
+            { nte: "2", municipio: "BARRA DO MENDES", codigoSec: "1125925", codigoInep: "29058244", unidadeEscolar: "COLEGIO ESTADUAL DE TEMPO INTEGRAL" },
+            { nte: "2", municipio: "BARRO ALTO", codigoSec: "1126212", codigoInep: "29059380", unidadeEscolar: "COLEGIO ESTADUAL DE TEMPO INTEGRAL NECY NOVAIS" }
+        ];
         
         const FAED_CONFIG = {
             2023: { sheetName: 'BBPag2023', codigoCol: 'C', valorCol: 'E' },
@@ -456,16 +466,43 @@
             const container = document.getElementById('resultsTable');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando dados da planilha...</div>';
             try {
+                // Usar o endpoint do Google Sheets com formato CSV
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
-                const response = await fetch(url);
+                console.log('Tentando carregar:', url);
+                
+                const response = await fetch(url, {
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
                 const csvText = await response.text();
+                console.log('CSV recebido, tamanho:', csvText.length);
+                
+                if (csvText.length < 100) {
+                    throw new Error('Dados insuficientes');
+                }
+                
                 escolasData = parseCSV(csvText);
+                
+                if (escolasData.length === 0) {
+                    throw new Error('Nenhuma escola encontrada');
+                }
+                
                 mostrarResultados(escolasData);
                 document.getElementById('resultCount').innerHTML = escolasData.length + ' registros';
                 console.log('✅ Dados carregados:', escolasData.length, 'escolas');
-            } catch(e) { 
-                container.innerHTML = '<div class="empty-state"><p>❌ Erro ao carregar dados. Clique em "Carregar Dados" novamente.</p></div>';
+                
+            } catch(e) {
                 console.error('Erro ao carregar:', e);
+                // Usar dados de exemplo em caso de erro
+                escolasData = DADOS_EXEMPLO;
+                mostrarResultados(escolasData);
+                document.getElementById('resultCount').innerHTML = escolasData.length + ' registros (dados de exemplo)';
+                container.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> Não foi possível carregar os dados da planilha. Exibindo dados de exemplo.<br><button class="btn-retry btn-small" onclick="carregarDadosPlanilha()"><i class="fas fa-redo"></i> Tentar novamente</button></div>' + container.innerHTML;
             }
         }
         
@@ -692,7 +729,6 @@
             }
         }
         
-        // FILTRO AUTO - NUMERO BUSCA NTE, TEXTO BUSCA TUDO
         function autoFiltro() {
             if (escolasData.length === 0) return;
             const termo = document.getElementById('searchValue').value.trim();
@@ -724,7 +760,6 @@
             mostrarResultados(resultados);
         }
         
-        // FUNÇÃO PARA MOSTRAR A TABELA
         function mostrarResultados(resultados) {
             const container = document.getElementById('resultsTable');
             document.getElementById('resultCount').innerHTML = resultados.length + ' registros';
@@ -762,12 +797,11 @@
             }
             
             html += '</tbody>';
-            html += '</table>';
+            html += '赶able>';
             html += '</div>';
             
             container.innerHTML = html;
             
-            // Eventos dos checkboxes
             document.querySelectorAll('.school-checkbox').forEach(cb => {
                 cb.onchange = () => {
                     const codigo = cb.dataset.codigo;
@@ -1060,7 +1094,7 @@
             };
         });
         
-        // CARREGA OS DADOS AUTOMATICAMENTE AO INICIAR
+        // Carrega dados automaticamente ao iniciar
         carregarDadosPlanilha();
         carregarListasSalvas();
         carregarNotasCloud();
