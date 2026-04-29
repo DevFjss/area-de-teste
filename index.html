@@ -185,7 +185,7 @@
 
             <div class="card">
                 <div class="card-header"><h3><i class="fas fa-table-list"></i> Lista de Escolas</h3><span class="badge" id="resultCount">0 registros</span></div>
-                <div id="resultsTable"><div class="empty-state"><i class="fas fa-cloud-download-alt" style="font-size: 3rem;"></i><p>Clique em "Carregar Dados" para exibir as escolas</p></div></div>
+                <div id="resultsTable"><div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Carregando dados da planilha...</div></div>
             </div>
         </div>
 
@@ -283,6 +283,7 @@
     </div>
 
     <script>
+        // Verifica se o usuário está logado
         const usuarioLogado = sessionStorage.getItem('usuarioLogado');
         if (!usuarioLogado) {
             window.location.href = 'https://devfjss.github.io/login-nota-tecnica-cdf/';
@@ -453,7 +454,7 @@
         
         async function carregarDadosPlanilha() {
             const container = document.getElementById('resultsTable');
-            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando...</div>';
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando dados da planilha...</div>';
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
                 const response = await fetch(url);
@@ -461,7 +462,11 @@
                 escolasData = parseCSV(csvText);
                 mostrarResultados(escolasData);
                 document.getElementById('resultCount').innerHTML = escolasData.length + ' registros';
-            } catch(e) { container.innerHTML = '<div class="empty-state"><p>Erro ao carregar.</p></div>'; }
+                console.log('✅ Dados carregados:', escolasData.length, 'escolas');
+            } catch(e) { 
+                container.innerHTML = '<div class="empty-state"><p>❌ Erro ao carregar dados. Clique em "Carregar Dados" novamente.</p></div>';
+                console.error('Erro ao carregar:', e);
+            }
         }
         
         async function carregarValoresDaAba(sheetName, codigoCol, valorCol) {
@@ -719,7 +724,7 @@
             mostrarResultados(resultados);
         }
         
-        // FUNÇÃO CORRIGIDA PARA MOSTRAR A TABELA
+        // FUNÇÃO PARA MOSTRAR A TABELA
         function mostrarResultados(resultados) {
             const container = document.getElementById('resultsTable');
             document.getElementById('resultCount').innerHTML = resultados.length + ' registros';
@@ -747,12 +752,12 @@
                 const escola = resultados[i];
                 const isSelected = escolasSelecionadas.some(s => s.codigoSec === escola.codigoSec);
                 html += `<tr class="${isSelected ? 'selected-row' : ''}" style="border-bottom: 1px solid #ddd;">`;
-                html += `<td class="checkbox-col" style="text-align: center;"><input type="checkbox" class="school-checkbox" data-codigo="${escola.codigoSec}" ${isSelected ? 'checked' : ''}></td>`;
+                html += `<td class="checkbox-col" style="text-align: center;"><input type="checkbox" class="school-checkbox" data-codigo="${escola.codigoSec}" ${isSelected ? 'checked' : ''}>`;
                 html += `<td style="text-align: center; font-weight: bold;">${escola.nte || '-'}</td>`;
-                html += `<td>${escola.municipio || '-'}</td>`;
+                html += `<td style="text-align: left;">${escola.municipio || '-'}</td>`;
                 html += `<td style="text-align: center;">${escola.codigoSec || '-'}</td>`;
                 html += `<td style="text-align: center;">${escola.codigoInep || '-'}</td>`;
-                html += `<td>${escola.unidadeEscolar || '-'}</td>`;
+                html += `<td style="text-align: left;">${escola.unidadeEscolar || '-'}</td>`;
                 html += `</tr>`;
             }
             
@@ -815,7 +820,7 @@
             if (escolasSelecionadas.length === 0) { container.innerHTML = '<div class="empty-state"><p>Nenhuma escola selecionada</p></div>'; return; }
             let html = '<div class="table-wrapper">\n<table style="min-width: 1200px;">\n<thead><tr style="background: #9ca3af;"><th>NTE</th><th>Município</th><th>Código SEC</th><th>Código INEP</th><th>Unidade Escolar</th><th colspan="4">FAED</th><th colspan="8">ALIMENTAÇÃO</th></tr><tr style="background: #6b7280;"><th></th><th></th><th></th><th></th><th></th><th>2023</th><th>2024</th><th>2025</th><th>2026</th><th>Fed23</th><th>Est23</th><th>Fed24</th><th>Est24</th><th>Fed25</th><th>Est25</th><th>Fed26</th><th>Est26</th></tr></thead><tbody>';
             for (const escola of escolasSelecionadas) {
-                html += `<tr><td>${escola.nte || '-'}</td><td>${escola.municipio || '-'}</td><td>${escola.codigoSec || '-'}</td><td>${escola.codigoInep || '-'}</td><td style="text-align:left">${escola.unidadeEscolar || '-'}</td>`;
+                html += `<tr><td style="text-align: center;">${escola.nte || '-'}</td><td style="text-align: left;">${escola.municipio || '-'}</td><td style="text-align: center;">${escola.codigoSec || '-'}</td><td style="text-align: center;">${escola.codigoInep || '-'}</td><td style="text-align: left;">${escola.unidadeEscolar || '-'}</td>`;
                 for (let ano of [2023, 2024, 2025, 2026]) { html += `<td class="valor-monetario">${formatarValorBR(valoresFAED[ano][escola.codigoSec] || 0)}</td>`; }
                 for (let ano of [2023, 2024, 2025, 2026]) { html += `<td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].federal[escola.codigoSec] || 0)}</td><td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].estadual[escola.codigoSec] || 0)}</td>`; }
                 html += `</tr>`;
@@ -1002,7 +1007,7 @@
         
         async function buscarFAED() { if (escolasSelecionadas.length === 0) { alert('Selecione escolas'); return; } await carregarValoresFAED(); renderGerarTabela(); atualizarCardsGerarValor(); alert('✅ FAED carregado!'); }
         async function buscarAlimentacao() { if (escolasSelecionadas.length === 0) { alert('Selecione escolas'); return; } await carregarValoresAlimentacao(); renderGerarTabela(); atualizarCardsGerarValor(); alert('✅ Alimentação carregada!'); }
-        function limparGerar() { escolasSelecionadas = []; currentIndividualValues = []; renderGerarTabela(); atualizarCardsGerarValor(); alert('Gerar Valor limpo!'); }
+        function limparGerar() { escolasSelecionadas = []; currentIndividualValues = []; renderGerarTabela(); atualizarCardsGerarValor(); alert('✅ Lista de escolas selecionadas foi limpa!'); }
         function limparResumo() { if(confirm('Limpar todo resumo?')) { resumoDados = []; renderResumoConsolidado(); alert('Resumo limpo!'); } }
         function exportarParaExcel(tabelaElement, nomeArquivo) { if (!tabelaElement) { alert('Nenhum dado para exportar'); return; } let tabelaParaExportar = tabelaElement; if (tabelaElement.tagName === 'DIV' && tabelaElement.querySelector('table')) { tabelaParaExportar = tabelaElement.querySelector('table'); } const tabelaClone = tabelaParaExportar.cloneNode(true); const colunasSelecao = tabelaClone.querySelectorAll('.resumo-checkbox-col'); colunasSelecao.forEach(coluna => { coluna.remove(); }); const checkboxes = tabelaClone.querySelectorAll('input[type="checkbox"]'); checkboxes.forEach(cb => cb.remove()); const ws = XLSX.utils.table_to_sheet(tabelaClone, { raw: true }); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Relatorio'); XLSX.writeFile(wb, nomeArquivo + '.xlsx'); }
         async function exportarParaPDF(elemento, nomeArquivo) { if (!elemento || elemento.innerHTML.includes('Nenhum dado')) { alert('Nenhum dado para exportar'); return; } const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename: nomeArquivo + '.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' } }; html2pdf().set(opt).from(elemento).save(); }
@@ -1015,6 +1020,7 @@
         function exportarListasExcel() { if (listasSalvas.length === 0) { alert('Nenhuma lista para exportar!'); return; } const dadosExportar = []; for (const lista of listasSalvas) { for (const escola of lista.escolas) { dadosExportar.push({ 'Lista': lista.nome, 'Usuario': lista.nomeUsuario || 'Nao informado', 'Data': new Date(lista.data).toLocaleString('pt-BR'), 'NTE': escola.nte, 'Municipio': escola.municipio, 'Codigo SEC': escola.codigoSec, 'Codigo INEP': escola.codigoInep, 'Unidade Escolar': escola.unidadeEscolar }); } } const ws = XLSX.utils.json_to_sheet(dadosExportar); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Listas de Escolas'); XLSX.writeFile(wb, `listas_escolas_${new Date().toISOString().slice(0,19)}.xlsx`); alert('📊 Listas exportadas!'); }
         function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
         
+        // Event Listeners
         document.getElementById('loadDataBtn').onclick = carregarDadosPlanilha;
         document.getElementById('exportToGerarBtn').onclick = exportarParaGerar;
         document.getElementById('buscarFaedBtn').onclick = buscarFAED;
@@ -1054,6 +1060,8 @@
             };
         });
         
+        // CARREGA OS DADOS AUTOMATICAMENTE AO INICIAR
+        carregarDadosPlanilha();
         carregarListasSalvas();
         carregarNotasCloud();
     </script>
