@@ -878,28 +878,82 @@
         }
         
         function enviarParaResumo() {
-            if (escolasSelecionadas.length === 0) { alert('Selecione escolas primeiro'); return; }
-            if (currentIndividualValues.length === 0) {
-                alert('⚠️ Para enviar ao resumo, primeiro use "Buscar e Selecionar Múltiplos" na aba Consulta Escolas.');
-                return;
+    if (escolasSelecionadas.length === 0) { 
+        alert('⚠️ Selecione escolas primeiro na aba "Consultar Escolas"!'); 
+        return; 
+    }
+    
+    // Se não tem grupos salvos (busca múltipla), cria grupos automaticamente por NTE
+    if (currentIndividualValues.length === 0) {
+        // Agrupa automaticamente por NTE
+        const gruposPorNTE = new Map();
+        
+        for (const escola of escolasSelecionadas) {
+            const nte = escola.nte;
+            if (!gruposPorNTE.has(nte)) {
+                gruposPorNTE.set(nte, []);
             }
+            gruposPorNTE.get(nte).push(escola);
+        }
+        
+        // Para cada NTE, calcular totais
+        for (const [nte, escolas] of gruposPorNTE) {
+            let faedTotal = { 2023: 0, 2024: 0, 2025: 0, 2026: 0 };
+            let alimentacaoTotal = { 
+                2023: { federal: 0, estadual: 0 }, 
+                2024: { federal: 0, estadual: 0 }, 
+                2025: { federal: 0, estadual: 0 }, 
+                2026: { federal: 0, estadual: 0 } 
+            };
             
-            const grupos = agruparPorValor();
-            
-            for (const [identificador, dadosGrupo] of grupos) {
-                const existeIndex = resumoDados.findIndex(item => item.identificador === identificador);
-                if (existeIndex !== -1) {
-                    if (!confirm(`Já existe um item "${identificador}" no resumo. Deseja substituí-lo?`)) continue;
-                    resumoDados[existeIndex] = { id: resumoDados[existeIndex].id, ...dadosGrupo };
-                } else {
-                    resumoDados.push({ id: nextId++, ...dadosGrupo });
+            for (const escola of escolas) {
+                const totais = calcularTotaisPorEscola(escola);
+                for (let ano of [2023, 2024, 2025, 2026]) {
+                    faedTotal[ano] += totais.faed[ano];
+                    alimentacaoTotal[ano].federal += totais.alimentacao[ano].federal;
+                    alimentacaoTotal[ano].estadual += totais.alimentacao[ano].estadual;
                 }
             }
             
-            renderResumoConsolidado();
-            alert(`✅ ${grupos.size} grupo(s) adicionado(s)/substituído(s) no resumo!\n📊 Total de escolas: ${escolasSelecionadas.length}`);
+            const identificador = `NTE ${nte}`;
+            const existeIndex = resumoDados.findIndex(item => item.identificador === identificador);
+            const dadosGrupo = {
+                identificador: identificador,
+                faed2023: faedTotal[2023],
+                faed2024: faedTotal[2024],
+                faed2025: faedTotal[2025],
+                faed2026: faedTotal[2026],
+                alimentacao: alimentacaoTotal
+            };
+            
+            if (existeIndex !== -1) {
+                resumoDados[existeIndex] = { id: resumoDados[existeIndex].id, ...dadosGrupo };
+            } else {
+                resumoDados.push({ id: nextId++, ...dadosGrupo });
+            }
         }
         
+        renderResumoConsolidado();
+        alert(`✅ ${gruposPorNTE.size} NTE(s) adicionados ao resumo!\n📊 Total de escolas: ${escolasSelecionadas.length}`);
+        return;
+    }
+    
+    // Se tem grupos da busca múltipla, usa o método original
+    const grupos = agruparPorValor();
+    
+    for (const [identificador, dadosGrupo] of grupos) {
+        const existeIndex = resumoDados.findIndex(item => item.identificador === identificador);
+        if (existeIndex !== -1) {
+            if (!confirm(`Já existe um item "${identificador}" no resumo. Deseja substituí-lo?`)) continue;
+            resumoDados[existeIndex] = { id: resumoDados[existeIndex].id, ...dadosGrupo };
+        } else {
+            resumoDados.push({ id: nextId++, ...dadosGrupo });
+        }
+    }
+    
+    renderResumoConsolidado();
+    alert(`✅ ${grupos.size} grupo(s) adicionado(s) ao resumo!\n📊 Total de escolas: ${escolasSelecionadas.length}`);
+}
         function excluirResumoSelecionados() {
             const checkboxes = document.querySelectorAll('.resumo-item-checkbox:checked');
             if (checkboxes.length === 0) { alert('Selecione pelo menos um item para excluir.'); return; }
