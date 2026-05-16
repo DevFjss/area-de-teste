@@ -104,9 +104,95 @@
         .th-repasse { background: #edd5be !important; color: #5a3e1b; }
         .usuario-info { background: #e0f2fe; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .cloud-badge { background: #10b981; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 20px; margin-left: 8px; }
+
+        /* Modal de aviso - adicionado */
+        .modal-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+        .modal-alert-content {
+            background: linear-gradient(145deg, #0a2647, #0d2f55);
+            border-radius: 28px;
+            max-width: 550px;
+            width: 90%;
+            padding: 2rem 2rem 1.8rem 2rem;
+            text-align: center;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3), 0 0 0 2px rgba(47,128,237,0.3);
+            animation: fadeInScale 0.25s ease-out;
+        }
+        .modal-alert-icon {
+            font-size: 4rem;
+            color: #f59e0b;
+            margin-bottom: 1rem;
+            background: rgba(255,255,255,0.1);
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 60px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .modal-alert-content h2 {
+            color: white;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .modal-alert-message {
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .modal-alert-highlight {
+            background: #1e3a5f;
+            padding: 0.8rem;
+            border-radius: 16px;
+            margin: 1.2rem 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #bfdbfe;
+            border-left: 3px solid #2f80ed;
+            text-align: left;
+        }
+        .modal-alert-btn {
+            background: #2f80ed;
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-alert-btn:hover {
+            background: #1a68c7;
+            transform: scale(1.02);
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         @media print {
             body { background: white; }
-            .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container { display: none !important; }
+            .header, .tabs, .action-buttons, .report-actions, .card-header button, .btn, .search-form, .info-message, .valor-cards-container, .modal-alert { display: none !important; }
             .card { box-shadow: none; border: none; padding: 0; }
             .table-wrapper { overflow: visible; }
             table { font-size: 9pt; border-collapse: collapse; width: 100%; }
@@ -290,6 +376,43 @@
     </div>
 
     <script>
+        // ======================== MODAL DE AVISO ========================
+        // Função para exibir o alerta centralizado (azul escuro/fonte branca)
+        function exibirAlertaAtualizacaoGerador() {
+            // Verifica se o alerta já foi exibido nessa sessão para não poluir
+            if (sessionStorage.getItem('alertaGeradorExibido')) {
+                return;
+            }
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-alert';
+            modalDiv.innerHTML = `
+                <div class="modal-alert-content">
+                    <div class="modal-alert-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2>⚠️ ATENÇÃO!</h2>
+                    <div class="modal-alert-message">
+                        PRECISA ATUALIZAR AS BASES DO GERADOR
+                    </div>
+                    <div class="modal-alert-highlight">
+                        <i class="fas fa-folder-open" style="margin-right: 8px;"></i>
+                        A planilha fica na pasta de NOTA TÉCNICA:<br/>
+                        <strong>EXPORTAR_DADOS_NOTE_TRATAMENTO</strong>
+                    </div>
+                    <button class="modal-alert-btn" id="fecharModalAlertaBtn">
+                        <i class="fas fa-check-circle"></i> ENTENDI, FECHAR
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+            const fecharBtn = document.getElementById('fecharModalAlertaBtn');
+            fecharBtn.addEventListener('click', () => {
+                modalDiv.remove();
+                sessionStorage.setItem('alertaGeradorExibido', 'true');
+            });
+            // Clicar fora não fecha automaticamente para garantir leitura
+        }
+
         // Verifica se o usuário está logado
         const usuarioLogado = sessionStorage.getItem('usuarioLogado');
         if (!usuarioLogado) {
@@ -708,13 +831,11 @@
                 const isNumeroValido = !isNaN(termoNumero) && termoNumero >= 1 && termoNumero <= 27;
                 
                 resultados = escolasData.filter(escola => {
-                    // Se o checkbox está marcado e o termo é número válido -> busca EXATA no NTE
                     if (buscaNTEExata && isNumeroValido) {
                         const nteNumero = parseInt(escola.nte, 10);
                         return nteNumero === termoNumero;
                     }
                     
-                    // Busca normal (contém em qualquer lugar) para todos os campos
                     const nteStr = String(escola.nte || '').toLowerCase();
                     const termoLower = termo.toLowerCase();
                     
@@ -759,7 +880,7 @@
                     `</tr>`;
             }
             
-            html += '</tbody>}</div>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
             
             document.querySelectorAll('.school-checkbox').forEach(cb => {
@@ -819,7 +940,7 @@
                 for (let ano of [2023, 2024, 2025, 2026]) { html += `<td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].federal[escola.codigoSec] || 0)}</td><td class="valor-monetario">${formatarValorBR(valoresAlimentacao[ano].estadual[escola.codigoSec] || 0)}</td>`; }
                 html += `</tr>`;
             }
-            html += '</tbody>}</div>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
         }
         
@@ -883,9 +1004,7 @@
         return; 
     }
     
-    // Se não tem grupos salvos (busca múltipla), cria grupos automaticamente por NTE
     if (currentIndividualValues.length === 0) {
-        // Agrupa automaticamente por NTE
         const gruposPorNTE = new Map();
         
         for (const escola of escolasSelecionadas) {
@@ -896,7 +1015,6 @@
             gruposPorNTE.get(nte).push(escola);
         }
         
-        // Para cada NTE, calcular totais
         for (const [nte, escolas] of gruposPorNTE) {
             let faedTotal = { 2023: 0, 2024: 0, 2025: 0, 2026: 0 };
             let alimentacaoTotal = { 
@@ -938,7 +1056,6 @@
         return;
     }
     
-    // Se tem grupos da busca múltipla, usa o método original
     const grupos = agruparPorValor();
     
     for (const [identificador, dadosGrupo] of grupos) {
@@ -1067,6 +1184,10 @@
         carregarDadosPlanilha();
         carregarListasSalvas();
         carregarNotasCloud();
+
+        // 👇 EXIBE O MODAL DE AVISO (APÓS CARREGAR TUDO, MAS ANTES DE INTERAÇÃO)
+        // A função foi definida acima e chamada logo após a inicialização.
+        exibirAlertaAtualizacaoGerador();
     </script>
 </body>
 </html>
